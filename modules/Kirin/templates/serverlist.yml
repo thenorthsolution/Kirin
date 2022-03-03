@@ -1,0 +1,9 @@
+# This is where you can configure servers to start
+# We recommend not to edit this file and use creators command instead (see below)
+# ==========================================================
+#                     To create a server
+# ==========================================================
+#
+# use "{commandprefix}createserver" to create a server
+# without quotes and replace {commandprefix} with your message command prefix.
+# use help command to see all commands

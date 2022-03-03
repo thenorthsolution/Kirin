@@ -1,0 +1,31 @@
+# Options for createserver command
+createServer:
+  # Enable createserver command
+  enabled: true
+
+  # Permissions for createserver command
+  # Leave empty to use permissions from Bot/config.yml
+  permissions: ['ADMINISTRATOR']
+
+# Where your server list is stored
+serverListFile: '{rootDir}/serverlist.yml'
+
+# Discord permissions needs to start the servers
+serverStartPermissions: ['SEND_MESSAGES']
+
+# Options for pinging servers
+pingServers:
+  # Add status fields to server message embeds
+  displayServerStatus: true
+
+  # Disable start buttons when the server is online
+  disableStartButtonWhenOnline: true
+
+  # Server ping interval
+  pingIntervalMilliseconds: 60000
+
+  # Ping connection timeout in milliseconds
+  pingTimeoutMilliseconds: 5000
+
+  # Mark server with 0 max players as offline
+  zeroMaxServersAsOffline: true
