@@ -88,11 +88,12 @@ module.exports = class Server extends EventEmitter {
     async refreshMessage() {
         if (!this.message) throw new Error(`Message not found`, `Kirin/${this.name}`);
 
-        const newContent = new MessageContent(this);
+        const newContent = await new MessageContent(this).addContents();
 
-        await SafeMessage.edit(this.message, (await newContent.addContents()).content);
+        this.message = await SafeMessage.edit(this.message, newContent.content);
         this.emit('messageChange', this);
 
+        console.log(newContent.ping);
         return this.isActive ? setTimeout(() => this.refreshMessage(), this.kirin.config.pingServers.pingIntervalMilliseconds) : true;
     }
 
@@ -103,8 +104,6 @@ module.exports = class Server extends EventEmitter {
      */
     interactionFilter(interaction) {
         if (interaction.type !== 'MESSAGE_COMPONENT') return false;
-        if (interaction?.customId !== this.interactionId) return false;
-        if ((interaction.memberPermissions && this.kirin.config.serverStartPermissions) && !interaction.memberPermissions.has(this.kirin.config.serverStartPermissions)) return false;
 
         return true;
     }
@@ -115,8 +114,7 @@ module.exports = class Server extends EventEmitter {
      * @returns 
      */
     async start(interaction) {
-        this.logger.warn(`Starting ${this.name}`, `Kirin/${this.name}`);
-        this.isActive = true;
+        this.logger.warn(`Starting ${this.name} by ${interaction.user.tag}`, `Kirin/${this.name}`);
 
         if (this.scriptProcess) {
             this.logger.warn(`${this.name} already running`, `Kirin/${this.name}`);
@@ -133,20 +131,37 @@ module.exports = class Server extends EventEmitter {
         this.scriptProcess.once('close', code => {
             this.logger.warn(`${this.name} closed with code ${code}`, `Kirin/${this.name}`);
             this.closeProcess();
+            this.scriptProcess = null;
         });
         this.scriptProcess.once('exit', code => {
             this.logger.warn(`${this.name} exited with code ${code}`, `Kirin/${this.name}`);
             this.closeProcess();
+            this.scriptProcess = null;
         });
 
         return SafeInteract.reply(interaction, this.kirin.config.messages.process.starting);
     }
+
+    /**
+     * 
+     * @param {Discord.ButtonInteraction} interaction 
+     * @returns 
+     */
+    async stop(interaction) {
+        this.logger.warn(`Stopping ${this.name} by ${interaction.user.tag}`, `Kirin/${this.name}`);
+
+        if (!this.scriptProcess) {
+            this.logger.warn(`${this.name} not running`, `Kirin/${this.name}`);
+            return SafeInteract.reply(interaction, this.kirin.config.messages.process.notRunning);
+        }
+
+        this.closeProcess();
+        return SafeInteract.reply(interaction, this.kirin.config.messages.process.stopping);
+    }
     
     closeProcess() {
         if (!this.scriptProcess) return this;
-
-        if (!this.scriptProcess.killed) this.scriptProcess.kill();
-        this.scriptProcess = null;
+        if (!this.scriptProcess.killed) this.scriptProcess.kill('SIGINT');
 
         return this;
     }
