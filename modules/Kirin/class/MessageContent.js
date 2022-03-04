@@ -8,6 +8,7 @@ module.exports = class MessageContent {
      */
     constructor(server) {
         this.server = server;
+        this.ping = null;
         this.content = {
             content: ' ',
             embeds: [],
@@ -33,24 +34,34 @@ module.exports = class MessageContent {
         }
 
         this.content.embeds = [embed];
-        this.addComponents(ping.status !== 'OFFLINE');
+        this.addComponents(ping.status);
 
+        this.ping = ping;
         return this;
     }
 
-    addComponents(disabled = false) {
+    addComponents(ping = { status: 'OFFLINE' }) {
         this.content.components = [
-            new Discord.MessageActionRow().addComponents(this.getButton(disabled))
+            new Discord.MessageActionRow().addComponents(this.getButton(ping))
         ];
     }
 
-    getButton(disabled = false) {
+    getButton(ping) {
         const startButton = new Discord.MessageButton()
-            .setCustomId(this.server.interactionId)
+            .setCustomId(this.server.interactionId + '_start')
             .setLabel(this.server.kirin.config.messages.buttons.start)
             .setStyle('SUCCESS')
-            .setDisabled(disabled);
+            .setDisabled(ping === 'ONLINE');
 
-        return [startButton];
+        const stopButton = new Discord.MessageButton()
+            .setCustomId(this.server.interactionId + '_stop')
+            .setLabel(this.server.kirin.config.messages.buttons.stop)
+            .setStyle('DANGER')
+            .setDisabled(ping === 'OFFLINE');
+
+        const buttons = [startButton];
+        if (this.server.kirin.config.addStopButton) buttons.push(stopButton);
+
+        return buttons;
     }
 }
