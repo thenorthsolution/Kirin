@@ -76,10 +76,10 @@ typings/
 .fusebox/
 
 # Axis
-.axiscache
-scripts/
-config/
-index.js
+/.axiscache
+/scripts/
+/config/
+/index.js
 start.sh
 package.json.old
 KirinModule.zip
