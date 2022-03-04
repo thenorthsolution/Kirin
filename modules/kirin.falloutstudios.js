@@ -30,6 +30,7 @@ class KirinFalloutStudios {
         }
 
         this.kirin = new Kirin(Client, minecraftProtocol, shelljs);
+        this.commands = this.kirin.commands;
 
         return !!this.kirin;
     }
