@@ -1,5 +1,4 @@
 const Kirin = require('../');
-const shelljs = require('shelljs');
 const { SafeMessage, SafeInteract } = require('../../../scripts/safeActions');
 const MessageContent = require('./MessageContent');
 const EventEmitter = require('events');
@@ -125,7 +124,7 @@ module.exports = class Server extends EventEmitter {
             return SafeInteract.reply(interaction, this.kirin.config.messages.process.alreadyRunning);
         }
 
-        this.scriptProcess = shelljs.exec(this.startScript, { silent: true, async: true, cwd: this.startScriptPath || './' });
+        this.scriptProcess = this.kirin.shelljs.exec(this.startScript, { silent: true, async: true, cwd: this.startScriptPath || './' });
 
         this.scriptProcess.stdout.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.info(message.trim(), `Kirin/${this.name} - Console/STDOUT`) : null);
         this.scriptProcess.stderr.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message.trim(), `Kirin/${this.name} - Console/STDERR`) : null);

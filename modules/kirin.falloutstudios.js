@@ -18,16 +18,18 @@ class KirinFalloutStudios {
         this.logger = Client.AxisUtility.logger;
 
         let minecraftProtocol = null;
+        let shelljs = null;
 
         try {
             minecraftProtocol = require('minecraft-protocol');
+            shelljs = require('shelljs');
         } catch (error) {
-            this.logger.error('Please install "minecraft-protocol" using your package manager.', 'Kirin');
+            this.logger.error('Please install "shelljs" and "minecraft-protocol" using your package manager.', 'Kirin');
             this.logger.error(error, 'Kirin');
             return false;
         }
 
-        this.kirin = new Kirin(Client, minecraftProtocol);
+        this.kirin = new Kirin(Client, minecraftProtocol, shelljs);
 
         return !!this.kirin;
     }
