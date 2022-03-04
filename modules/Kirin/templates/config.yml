@@ -39,3 +39,6 @@ messages:
     alreadyRunning:
       content: 'Server is already running'
       ephemeral: true
+    starting:
+      content: 'Starting server...'
+      ephemeral: true
