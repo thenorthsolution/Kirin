@@ -15,7 +15,7 @@ module.exports = class Server extends EventEmitter {
      * @param {string} serverMessage.iconURL - Icon URL of the server
      * @param {string} serverMessage.color - The color of server embed
      */
-    constructor(kirin, host, port = 25565, serverMessage = { name: null, description: null, iconURL: null, color: Kirin.Client.AxisUtility.config.embedColor }) {
+    constructor(kirin, interactionId, host, port = 25565, serverMessage = { name: null, description: null, iconURL: null, color: Kirin.Client.AxisUtility.config.embedColor }) {
         super();
 
         this.kirin = kirin;
@@ -30,6 +30,7 @@ module.exports = class Server extends EventEmitter {
         this.guild = null;
         this.channel = null;
         this.message = null;
+        this.interactionId = interactionId;
     }
     
     async parse(guildId, channelId, messageId) {
@@ -50,8 +51,20 @@ module.exports = class Server extends EventEmitter {
     }
 
     async ping() {
-        const response = await this.kirin.minecraftProtocol.ping({ host: this.host, port: this.port, closeTimeout: this.kirin.config.pingServers.pingTimeoutMilliseconds });
-        if (response.error) throw new Error(response.error, `Kirin/${this.name}`);
+        const response = await this.kirin.minecraftProtocol.ping({ host: this.host, port: this.port, closeTimeout: this.kirin.config.pingServers.pingTimeoutMilliseconds }).catch(err => {
+            this.logger.error(`${this.name} ping error`, `Kirin/${this.name}`);
+            this.logger.error(err, `Kirin/${this.name}`);
+
+            return {
+                status: 'OFFLINE',
+                players: {
+                    online: 0,
+                    max: 0
+                },
+                version: null,
+                latency: NaN
+            };
+        });
 
         response.status = (this.kirin.config.pingServers.zeroMaxServersAsOffline && !response.maxPlayers) ? 'OFFLINE' : 'ONLINE';
         this.emit('ping', response);

@@ -29,3 +29,13 @@ pingServers:
 
   # Mark server with 0 max players as offline
   zeroMaxServersAsOffline: true
+
+# You can edit embed status fields here
+messages:
+  status:
+    online: 'Online'
+    offline: 'Offline'
+  fieldTitles:
+    status: 'Status'
+    players: 'Players'
+    version: 'Version'
