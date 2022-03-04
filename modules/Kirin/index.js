@@ -66,12 +66,8 @@ module.exports = class Kirin {
         process.on('exit', () => {
             for (const server of this.servers) {
                 if (!server.scriptProcess) return;
-                if (this.config.killOnStop) {
-                    server.scriptProcess.kill('SIGINT');
-                }
-
+                server.scriptProcess.kill('SIGINT');
                 server.scriptProcess.disconnect();
-                server.scriptProcess = null;
             }
         })
     }

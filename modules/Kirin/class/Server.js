@@ -93,7 +93,6 @@ module.exports = class Server extends EventEmitter {
         this.message = await SafeMessage.edit(this.message, newContent.content);
         this.emit('messageChange', this);
 
-        console.log(newContent.ping);
         return this.isActive ? setTimeout(() => this.refreshMessage(), this.kirin.config.pingServers.pingIntervalMilliseconds) : true;
     }
 
@@ -121,7 +120,14 @@ module.exports = class Server extends EventEmitter {
             return SafeInteract.reply(interaction, this.kirin.config.messages.process.alreadyRunning);
         }
 
-        this.scriptProcess = this.kirin.shelljs.exec(this.startScript, { silent: true, async: true, cwd: this.startScriptPath || './' });
+        this.scriptProcess = this.kirin.shelljs.exec(this.startScript, {
+            silent: true,
+            async: true,
+            cwd: this.startScriptPath || './',
+            detached: true,
+            stdio: ['ignore', 'ignore', 'ignore']
+        });
+        this.scriptProcess.unref();
 
         this.scriptProcess.stdout.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.info(message.trim(), `Kirin/${this.name} - Console/STDOUT`) : null);
         this.scriptProcess.stderr.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message.trim(), `Kirin/${this.name} - Console/STDERR`) : null);

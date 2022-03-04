@@ -48,7 +48,7 @@ class KirinFalloutStudios {
         this.logger.log(`Loaded ${this.kirin.servers.length} servers.`, 'Kirin');
         this.logger.log('Kirin loaded.', 'Kirin');
 
-        await this.kirin.parseServers();
+        return this.kirin.parseServers();
     }
 }
 
