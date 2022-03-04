@@ -36,14 +36,15 @@ class KirinFalloutStudios {
      * 
      * @param {Discord.Client} Client
      */
-    onLoad(Client) {
+    async onLoad(Client) {
         if (Client.AxisUtility.config.version !== this.nativeVersion) {
             this.logger.warn(`Kirin is not running on version ${this.nativeVersion}! If errors occur, please update to the supported version.`, 'Kirin');
         }
 
+        await this.kirin.parseServers();
         this.kirin.listenInteractions();
 
-        this.kirin.log(`Loaded ${this.kirin.servers.length} servers.`, 'Kirin');
+        this.logger.log(`Loaded ${this.kirin.servers.length} servers.`, 'Kirin');
         this.logger.log('Kirin loaded.', 'Kirin');
     }
 }

@@ -9,6 +9,9 @@ module.exports = class Server extends EventEmitter {
     /**
      * 
      * @param {Kirin} kirin - The Kirin instance
+     * @param {string} interactionId - customId for start button
+     * @param {string} startScript - start script file name
+     * @param {string} startScriptPath - path to your startScript
      * @param {string} host - Hostname or IP address of the server
      * @param {number} port - Server port (default: 25565)
      * @param {Object} serverMessage - The message options
@@ -17,10 +20,11 @@ module.exports = class Server extends EventEmitter {
      * @param {string} serverMessage.iconURL - Icon URL of the server
      * @param {string} serverMessage.color - The color of server embed
      */
-    constructor(kirin, interactionId, host, port = 25565, serverMessage = { name: null, description: null, iconURL: null, color: Kirin.Client.AxisUtility.config.embedColor }) {
+    constructor(kirin, interactionId, startScript, startScriptPath, host, port = 25565, serverMessage = { name: null, description: null, iconURL: null, color: Kirin.Client.AxisUtility.config.embedColor }) {
         super();
 
         this.kirin = kirin;
+        this.logger = kirin.logger;
         this.isActive = true;
         this.name = serverMessage.name;
         this.description = serverMessage.description;
@@ -28,7 +32,8 @@ module.exports = class Server extends EventEmitter {
         this.color = serverMessage.color;
         this.host = host;
         this.port = port;
-        this.startScript = null;
+        this.startScript = startScript;
+        this.startScriptPath = startScriptPath;
         this.guild = null;
         this.channel = null;
         this.message = null;
@@ -37,9 +42,9 @@ module.exports = class Server extends EventEmitter {
     }
     
     async parse(guildId, channelId, messageId) {
-        this.guild = guild;
-        this.channel = channel;
-        this.message = message;
+        this.guild = guildId;
+        this.channel = channelId;
+        this.message = messageId;
 
         const getGuild = this.kirin.Client.guilds.cache.get(guildId) || await this.kirin.Client.guilds.fetch(guildId);
         if (!getGuild) throw new Error(`Guild not found`, `Kirin/${this.name}`);
@@ -49,6 +54,10 @@ module.exports = class Server extends EventEmitter {
 
         const getMessage = getChannel.messages.cache.get(messageId) || await getChannel.messages.fetch(messageId);
         if (!getMessage) throw new Error(`Message not found`, `Kirin/${this.name}`);
+
+        this.guild = getGuild;
+        this.channel = getChannel;
+        this.message = getMessage;
 
         return this;
     }
@@ -75,15 +84,15 @@ module.exports = class Server extends EventEmitter {
         return response;
     }
 
-    async refreshMessages() {
+    async refreshMessage() {
         if (!this.message) throw new Error(`Message not found`, `Kirin/${this.name}`);
 
-        const newContent = new MessageContent(this).addContents();
+        const newContent = new MessageContent(this);
 
-        await SafeMessage.edit(this.message, newContent);
+        await SafeMessage.edit(this.message, (await newContent.addContents()).content);
         this.emit('messageChange', this);
 
-        return this.isActive ? setTimeout(() => this.refreshMessages(), this.kirin.config.pingServers.pingIntervalMilliseconds) : true;
+        return this.isActive ? setTimeout(() => this.refreshMessage(), this.kirin.config.pingServers.pingIntervalMilliseconds) : true;
     }
 
     /**
@@ -105,7 +114,7 @@ module.exports = class Server extends EventEmitter {
      * @returns 
      */
     async start(interaction) {
-        this.logger.info(`Starting ${this.name}`, `Kirin/${this.name}`);
+        this.logger.warn(`Starting ${this.name}`, `Kirin/${this.name}`);
         this.isActive = true;
 
         if (this.scriptProcess) {
@@ -113,15 +122,23 @@ module.exports = class Server extends EventEmitter {
             return SafeInteract.reply(interaction, this.kirin.config.messages.process.alreadyRunning);
         }
 
-        this.scriptProcess = shelljs.exec(this.startScript, { silent: true, async: true });
+        this.scriptProcess = shelljs.exec(this.startScript, { silent: true, async: true, cwd: this.startScriptPath || './' });
+
+        this.scriptProcess.stdout.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.info(message.trim(), `Kirin/${this.name} - Console/STDOUT`) : null);
+        this.scriptProcess.stderr.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message.trim(), `Kirin/${this.name} - Console/STDERR`) : null);
+        this.scriptProcess.stdin.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.warn(message.trim(), `Kirin/${this.name} - Console/STDIN`) : null);
+
+        this.scriptProcess.on('error', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message, `Kirin/${this.name}`) : null);
         this.scriptProcess.once('close', code => {
-            this.logger.info(`${this.name} stopped with code ${code}`, `Kirin/${this.name}`);
+            this.logger.warn(`${this.name} closed with code ${code}`, `Kirin/${this.name}`);
             this.closeProcess();
         });
         this.scriptProcess.once('exit', code => {
-            this.logger.info(`${this.name} stopped with code ${code}`, `Kirin/${this.name}`);
+            this.logger.warn(`${this.name} exited with code ${code}`, `Kirin/${this.name}`);
             this.closeProcess();
         });
+
+        return SafeInteract.reply(interaction, this.kirin.config.messages.process.starting);
     }
     
     closeProcess() {

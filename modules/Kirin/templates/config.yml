@@ -13,6 +13,9 @@ serverListFile: '{rootDir}/serverlist.yml'
 # Discord permissions needs to start the servers
 serverStartPermissions: ['SEND_MESSAGES']
 
+# Display console messages
+displayConsoleMessages: false
+
 # Options for pinging servers
 pingServers:
   # Add status fields to server message embeds

@@ -79,3 +79,4 @@ typings/
 scripts/
 config/
 index.js
+start.sh
