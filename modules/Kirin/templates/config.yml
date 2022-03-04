@@ -7,6 +7,15 @@ serverStartPermissions: ['SEND_MESSAGES']
 # Display console messages
 displayConsoleMessages: false
 
+# Add stop button
+addStopButton: true
+
+# Discord permissions needs to stop the servers
+serverStopPermissions: ['ADMINISTRATOR']
+
+# Kill servers on bot stop
+killOnStop: false
+
 # Options for pinging servers
 pingServers:
   # Add status fields to server message embeds
@@ -14,6 +23,9 @@ pingServers:
 
   # Disable start buttons when the server is online
   disableStartButtonWhenOnline: true
+
+  # Disable stop buttons when the server is offline
+  disableStopButtonWhenOffline: true
 
   # Server ping interval
   pingIntervalMilliseconds: 60000
@@ -35,10 +47,20 @@ messages:
     version: 'Version'
   buttons:
     start: 'Start'
+    stop: 'Stop'
   process:
     alreadyRunning:
-      content: 'Server is already running'
+      content: 'Server is already running or starting'
+      ephemeral: true
+    notRunning:
+      content: 'Server is not running'
       ephemeral: true
     starting:
       content: 'Starting server...'
+      ephemeral: true
+    stopping:
+      content: 'Stopping server...'
+      ephemeral: true
+    noPermissions:
+      content: 'You do not have the required permissions to do this action'
       ephemeral: true
