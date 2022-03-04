@@ -1,12 +1,3 @@
-# Options for createserver command
-createServer:
-  # Enable createserver command
-  enabled: true
-
-  # Permissions for createserver command
-  # Leave empty to use permissions from Bot/config.yml
-  permissions: ['ADMINISTRATOR']
-
 # Where your server list is stored
 serverListFile: '{rootDir}/serverlist.yml'
 
