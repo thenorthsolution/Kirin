@@ -39,3 +39,9 @@ messages:
     status: 'Status'
     players: 'Players'
     version: 'Version'
+  buttons:
+    start: 'Start'
+  process:
+    alreadyRunning:
+      content: 'Server is already running'
+      ephemeral: true

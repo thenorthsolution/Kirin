@@ -1,7 +1,9 @@
 const Kirin = require('../');
-const { SafeMessage } = require('../../../scripts/safeActions');
+const shelljs = require('shelljs');
+const { SafeMessage, SafeInteract } = require('../../../scripts/safeActions');
 const MessageContent = require('./MessageContent');
 const EventEmitter = require('events');
+const Discord = require('discord.js');
 
 module.exports = class Server extends EventEmitter {
     /**
@@ -31,6 +33,7 @@ module.exports = class Server extends EventEmitter {
         this.channel = null;
         this.message = null;
         this.interactionId = interactionId;
+        this.scriptProcess = null;
     }
     
     async parse(guildId, channelId, messageId) {
@@ -75,11 +78,58 @@ module.exports = class Server extends EventEmitter {
     async refreshMessages() {
         if (!this.message) throw new Error(`Message not found`, `Kirin/${this.name}`);
 
-        const newContent = new MessageContent(this);
+        const newContent = new MessageContent(this).addContents();
 
         await SafeMessage.edit(this.message, newContent);
         this.emit('messageChange', this);
 
         return this.isActive ? setTimeout(() => this.refreshMessages(), this.kirin.config.pingServers.pingIntervalMilliseconds) : true;
+    }
+
+    /**
+     * 
+     * @param {Discord.ButtonInteraction} interaction 
+     * @returns {Boolean}
+     */
+    interactionFilter(interaction) {
+        if (interaction.type !== 'MESSAGE_COMPONENT') return false;
+        if (interaction?.customId !== this.interactionId) return false;
+        if ((interaction.memberPermissions && this.kirin.config.serverStartPermissions) && !interaction.memberPermissions.has(this.kirin.config.serverStartPermissions)) return false;
+
+        return true;
+    }
+
+    /**
+     * 
+     * @param {Discord.ButtonInteraction} interaction 
+     * @returns 
+     */
+    async start(interaction) {
+        this.logger.info(`Starting ${this.name}`, `Kirin/${this.name}`);
+        this.isActive = true;
+
+        if (this.scriptProcess) {
+            this.logger.warn(`${this.name} already running`, `Kirin/${this.name}`);
+            return SafeInteract.reply(interaction, this.kirin.config.messages.process.alreadyRunning);
+        }
+
+        this.scriptProcess = shelljs.exec(this.startScript, { silent: true, async: true });
+        this.scriptProcess.once('close', code => {
+            this.logger.info(`${this.name} stopped with code ${code}`, `Kirin/${this.name}`);
+            this.closeProcess();
+        });
+        this.scriptProcess.once('exit', code => {
+            this.logger.info(`${this.name} stopped with code ${code}`, `Kirin/${this.name}`);
+            this.closeProcess();
+        });
+    }
+    
+    closeProcess() {
+        if (!this.scriptProcess) return this;
+
+        if (!this.scriptProcess.killed) this.scriptProcess.kill();
+        this.scriptProcess = null;
+
+        return this;
     }
 }

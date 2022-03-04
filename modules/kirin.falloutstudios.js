@@ -28,6 +28,7 @@ class KirinFalloutStudios {
         }
 
         this.kirin = new Kirin(Client, minecraftProtocol);
+
         return !!this.kirin;
     }
 
@@ -39,6 +40,11 @@ class KirinFalloutStudios {
         if (Client.AxisUtility.config.version !== this.nativeVersion) {
             this.logger.warn(`Kirin is not running on version ${this.nativeVersion}! If errors occur, please update to the supported version.`, 'Kirin');
         }
+
+        this.kirin.listenInteractions();
+
+        this.kirin.log(`Loaded ${this.kirin.servers.length} servers.`, 'Kirin');
+        this.logger.log('Kirin loaded.', 'Kirin');
     }
 }
 
