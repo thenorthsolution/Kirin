@@ -73,12 +73,15 @@ module.exports = class Server extends EventEmitter {
                     online: 0,
                     max: 0
                 },
-                version: null,
+                version: {
+                    name: 'Unknown',
+                    protocol: NaN
+                },
                 latency: NaN
             };
         });
 
-        response.status = (this.kirin.config.pingServers.zeroMaxServersAsOffline && !response.maxPlayers) ? 'OFFLINE' : 'ONLINE';
+        response.status = (this.kirin.config.pingServers.zeroMaxServersAsOffline && !response.players.max) ? 'OFFLINE' : 'ONLINE';
         this.emit('ping', response);
 
         return response;
