@@ -16,9 +16,9 @@ module.exports = class MessageContent {
     }
 
     async addContents() {
-        const embed = new Discord.MessageEmbed().setColor(this.server.kirin.Client.AxisUtility.config.embedColor);
+        const embed = new Discord.MessageEmbed().setColor(this.server.kirin.Client.AxisUtility.config.embedColor).setFooter({ text: 'Last updated' }).setTimestamp();
 
-        embed.setTitle(this.server.name);
+        if (this.server.name) embed.setTitle(this.server.name);
         if (this.server.description) embed.setDescription(this.server.description);
         if (this.server.icon) embed.setThumbnail(this.server.icon);
 
@@ -28,19 +28,19 @@ module.exports = class MessageContent {
 
             if (ping.status === 'ONLINE') {
                 embed.addField(this.server.kirin.config.messages.fieldTitles.players, `${ping.players.online}/${ping.players.max}`, true);
-                embed.addField(this.server.kirin.config.messages.fieldTitles.version, ping.version, true);
+                embed.addField(this.server.kirin.config.messages.fieldTitles.version, `${ping.version.name}`, true);
             }
         }
 
         this.content.embeds = [embed];
-        this.addComponents();
+        this.addComponents(ping.status !== 'OFFLINE');
 
         return this;
     }
 
-    addComponents() {
+    addComponents(disabled = false) {
         this.content.components = [
-            new Discord.MessageActionRow().addComponents(this.getButton())
+            new Discord.MessageActionRow().addComponents(this.getButton(disabled))
         ];
     }
 
