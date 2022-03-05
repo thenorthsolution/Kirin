@@ -41,6 +41,13 @@ module.exports = class Server extends EventEmitter {
         this.scriptProcess = null;
     }
     
+    /**
+     * 
+     * @param {String} guildId 
+     * @param {String} channelId 
+     * @param {String} messageId 
+     * @returns {Server}
+     */
     async parse(guildId, channelId, messageId) {
         this.guild = guildId;
         this.channel = channelId;
@@ -129,7 +136,6 @@ module.exports = class Server extends EventEmitter {
             cwd: this.startScriptPath || './',
             detached: !this.kirin.config.stopServerOnExit
         });
-        this.scriptProcess.unref();
 
         this.scriptProcess.stdout.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.info(message.toString().trim(), `Kirin/${this.name}|Console/STDOUT`) : null);
         this.scriptProcess.stderr.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message.toString().trim(), `Kirin/${this.name}|Console/STDERR`) : null);
