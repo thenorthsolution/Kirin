@@ -93,7 +93,8 @@ module.exports = class Server extends EventEmitter {
         this.message = await SafeMessage.edit(this.message, newContent.content);
         this.emit('messageChange', this);
 
-        return this.isActive ? setTimeout(() => this.refreshMessage(), this.kirin.config.pingServers.pingIntervalMilliseconds) : true;
+        if(this.isActive) setTimeout(() => this.refreshMessage(), this.kirin.config.pingServers.pingIntervalMilliseconds);
+        return true;
     }
 
     /**
