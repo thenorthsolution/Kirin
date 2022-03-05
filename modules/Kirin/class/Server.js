@@ -3,6 +3,7 @@ const { SafeMessage, SafeInteract } = require('../../../scripts/safeActions');
 const MessageContent = require('./MessageContent');
 const EventEmitter = require('events');
 const Discord = require('discord.js');
+const childProcess = require('child_process');
 
 module.exports = class Server extends EventEmitter {
     /**
@@ -121,18 +122,18 @@ module.exports = class Server extends EventEmitter {
             return SafeInteract.reply(interaction, this.kirin.config.messages.process.alreadyRunning);
         }
 
-        this.scriptProcess = this.kirin.shelljs.exec(this.startScript, {
+        const script = this.startScript.split(' ');
+        this.scriptProcess = childProcess.spawn(script.shift(), script, {
             silent: true,
             async: true,
             cwd: this.startScriptPath || './',
-            detached: true,
-            stdio: ['ignore', 'ignore', 'ignore']
+            detached: !this.kirin.config.stopServerOnExit
         });
         this.scriptProcess.unref();
 
-        this.scriptProcess.stdout.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.info(message.trim(), `Kirin/${this.name} - Console/STDOUT`) : null);
-        this.scriptProcess.stderr.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message.trim(), `Kirin/${this.name} - Console/STDERR`) : null);
-        this.scriptProcess.stdin.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.warn(message.trim(), `Kirin/${this.name} - Console/STDIN`) : null);
+        this.scriptProcess.stdout.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.info(message.toString().trim(), `Kirin/${this.name}|Console/STDOUT`) : null);
+        this.scriptProcess.stderr.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message.toString().trim(), `Kirin/${this.name}|Console/STDERR`) : null);
+        this.scriptProcess.stdin.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.warn(message.toString().trim(), `Kirin/${this.name}|Console/STDIN`) : null);
 
         this.scriptProcess.on('error', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message, `Kirin/${this.name}`) : null);
         this.scriptProcess.once('close', code => {
@@ -168,7 +169,13 @@ module.exports = class Server extends EventEmitter {
     
     closeProcess() {
         if (!this.scriptProcess) return this;
-        if (!this.scriptProcess.killed) this.scriptProcess.kill('SIGINT');
+        if (!this.scriptProcess.killed && this.scriptProcess?.pid) {
+            if (this.scriptProcess.kill(this.kirin.config.stopSignal)) {
+                this.logger.warn(`${this.name} | PID: ${this.scriptProcess.pid} killed with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
+            } else {
+                this.logger.error(`${this.name} | PID: ${this.scriptProcess.pid} unable to kill with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
+            }
+        }
 
         return this;
     }

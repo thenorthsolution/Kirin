@@ -13,6 +13,13 @@ addStopButton: true
 # Discord permissions needs to stop the servers
 serverStopPermissions: ['ADMINISTRATOR']
 
+# Stop servers when the bot stopped
+stopServerOnExit: false
+
+# Stop signal
+# DON'T CHANGE THIS IF YOU DON'T KNOW WHAT YOU ARE DOING
+stopSignal: 'SIGINT'
+
 # Options for pinging servers
 pingServers:
   # Add status fields to server message embeds
@@ -25,7 +32,7 @@ pingServers:
   disableStopButtonWhenOffline: true
 
   # Server ping interval
-  pingIntervalMilliseconds: 60000
+  pingIntervalMilliseconds: 5000
 
   # Ping connection timeout in milliseconds
   pingTimeoutMilliseconds: 5000

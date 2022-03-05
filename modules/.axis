@@ -6,7 +6,6 @@
 	"supportedVersions": ["1.6.3", "1.6.4", "1.6.5", "1.6.6"],
 	"description": "Launch your servers through Discord using Kirin",
 	"dependencies": {
-		"minecraft-protocol": "^1.31.0",
-        "shelljs": "^0.8.5"
+		"minecraft-protocol": "^1.31.0"
 	}
 }

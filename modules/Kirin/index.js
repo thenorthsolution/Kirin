@@ -10,8 +10,9 @@ module.exports = class Kirin {
     /**
      * 
      * @param {Discord.Client} Client 
+     * @param {import ('minecraft-protocol')} minecraftProtocol
      */
-    constructor (Client, minecraftProtocol = require('minecraft-protocol'), shelljs = require('shelljs')) {
+    constructor (Client, minecraftProtocol = require('minecraft-protocol')) {
         this.Client = Client;
         this.logger = Client.AxisUtility.logger;
         this.rootDir = './config/kirin';
