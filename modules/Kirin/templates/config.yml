@@ -13,9 +13,6 @@ addStopButton: true
 # Discord permissions needs to stop the servers
 serverStopPermissions: ['ADMINISTRATOR']
 
-# Kill servers on bot stop
-killOnStop: false
-
 # Options for pinging servers
 pingServers:
   # Add status fields to server message embeds

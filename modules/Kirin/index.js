@@ -62,14 +62,6 @@ module.exports = class Kirin {
             await server.parse(server.guildId, server.channelId, server.messageId);
             await server.refreshMessage();
         }
-
-        process.on('exit', () => {
-            for (const server of this.servers) {
-                if (!server.scriptProcess) return;
-                server.scriptProcess.kill('SIGINT');
-                server.scriptProcess.disconnect();
-            }
-        })
     }
 
     listenInteractions() {
