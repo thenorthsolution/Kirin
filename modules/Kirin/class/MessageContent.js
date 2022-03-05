@@ -51,7 +51,7 @@ module.exports = class MessageContent {
             .setCustomId(this.server.interactionId + '_start')
             .setLabel(this.server.kirin.config.messages.buttons.start)
             .setStyle('SUCCESS')
-            .setDisabled(ping === 'ONLINE');
+            .setDisabled(ping === 'ONLINE' || !!this.server.scriptProcess);
 
         const stopButton = new Discord.MessageButton()
             .setCustomId(this.server.interactionId + '_stop')
