@@ -1,3 +1,4 @@
+const { InteractionCommandBuilder, MessageCommandBuilder } = require('../../scripts/builders');
 const { SafeInteract } = require('../../scripts/safeActions');
 const makeConfig = require('../../scripts/makeConfig');
 const util = require('fallout-utility');
@@ -17,12 +18,15 @@ module.exports = class Kirin {
         this.logger = Client.AxisUtility.logger;
         this.rootDir = './config/kirin';
         this.minecraftProtocol = minecraftProtocol;
-        this.shelljs = shelljs;
         this.config = this.getConfig();
         this.servers = this.getServers();
         this.commands = this.getCommands();
     }
 
+    /**
+     * 
+     * @returns {InteractionCommandBuilder[]|MessageCommandBuilder[]}
+     */
     getCommands() {
         const commandsFolder = fs.readdirSync(`./${this.Client.AxisUtility.config.modulesFolder}/Kirin/commands/`, 'utf8').filter(file => file.endsWith('.js'));
 
@@ -35,12 +39,20 @@ module.exports = class Kirin {
         });
     }
 
+    /**
+     * 
+     * @returns {JSON}
+     */
     getConfig() {
         const config = fs.readFileSync(`./${this.Client.AxisUtility.config.modulesFolder}/Kirin/templates/config.yml`, 'utf8');
 
         return yml.parse(makeConfig(`${this.rootDir}/config.yml`, util.replaceAll(config, '{rootDir}', this.rootDir)));
     }
 
+    /**
+     * 
+     * @returns {Server[]}
+     */
     getServers() {
         if (!this.config?.serverListFile) throw new Error('No serverLists found in config.yml');
 
