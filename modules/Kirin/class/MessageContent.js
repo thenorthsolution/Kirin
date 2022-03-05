@@ -57,7 +57,7 @@ module.exports = class MessageContent {
             .setCustomId(this.server.interactionId + '_stop')
             .setLabel(this.server.kirin.config.messages.buttons.stop)
             .setStyle('DANGER')
-            .setDisabled(ping === 'OFFLINE');
+            .setDisabled(ping === 'OFFLINE' || !!!this.server.scriptProcess);
 
         const buttons = [startButton];
         if (this.server.kirin.config.addStopButton) buttons.push(stopButton);
