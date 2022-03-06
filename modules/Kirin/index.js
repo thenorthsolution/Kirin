@@ -77,6 +77,10 @@ module.exports = class Kirin {
         }
     }
 
+    onlineServers() {
+        return this.servers.filter(srv => srv.status === 'ONLINE' || !!srv.scriptProcess);
+    }
+
     listenInteractions() {
         this.Client.on('interactionCreate',
             /**
@@ -89,11 +93,12 @@ module.exports = class Kirin {
 
                 const server = this.servers.find(srv => srv.interactionId === serverId);
                 if (!server || !server?.isActive || !interaction?.member || !server.interactionFilter(interaction)) return;
-                
+
                 switch (serverAction) {
                     case 'start':
                         if (!interaction.member.permissions.has(this.config.serverStartPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
                         if (server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.alreadyRunning);
+                        if (this.config.onlineServersLimit != 0 && this.onlineServers().length >= this.config.onlineServersLimit) return SafeInteract.reply(interaction, this.config.messages.errors.onlineServersLimitMessage);
                         
                         return server.start(interaction);
                     case 'stop':

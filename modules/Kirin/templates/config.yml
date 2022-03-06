@@ -20,6 +20,10 @@ stopServerOnExit: false
 # DON'T CHANGE THIS IF YOU DON'T KNOW WHAT YOU ARE DOING
 stopSignal: 'SIGINT'
 
+# Limit the number of online servers
+# If you set this to 0, there is no limit
+onlineServersLimit: 0
+
 # Options for pinging servers
 pingServers:
   # Add status fields to server message embeds
@@ -53,6 +57,9 @@ messages:
     start: 'Start'
     stop: 'Stop'
   errors:
+    onlineServersLimitMessage:
+      content: 'The maximum number of online servers has been reached.'
+      ephemeral: true
     stop:
       content: 'Could not stop server'
       ephemeral: true
