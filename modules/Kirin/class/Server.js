@@ -26,6 +26,7 @@ module.exports = class Server extends EventEmitter {
         this.kirin = kirin;
         this.logger = kirin.logger;
         this.isActive = true;
+        this.status = 'OFFLINE';
         this.name = serverMessage.name;
         this.description = serverMessage.description;
         this.icon = serverMessage.iconURL;
@@ -89,6 +90,7 @@ module.exports = class Server extends EventEmitter {
 
         response.status = (this.kirin.config.pingServers.zeroMaxServersAsOffline && !response.players.max) ? 'OFFLINE' : 'ONLINE';
         this.emit('ping', response);
+        this.status = response.status;
 
         return response;
     }
@@ -144,13 +146,11 @@ module.exports = class Server extends EventEmitter {
         this.scriptProcess.on('error', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message, `Kirin/${this.name}`) : null);
         this.scriptProcess.once('disconnect', () => this.scriptProcess = null);
         this.scriptProcess.once('close', code => {
-            if (!code) return;
             this.logger.warn(`${this.name} closed with code ${code}`, `Kirin/${this.name}`);
             this.closeProcess();
             this.scriptProcess = null;
         });
         this.scriptProcess.once('exit', code => {
-            if (!code) return;
             this.logger.warn(`${this.name} exited with code ${code}`, `Kirin/${this.name}`);
             this.closeProcess();
             this.scriptProcess = null;
