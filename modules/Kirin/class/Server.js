@@ -111,9 +111,7 @@ module.exports = class Server extends EventEmitter {
      * @returns {Boolean}
      */
     interactionFilter(interaction) {
-        if (interaction.type !== 'MESSAGE_COMPONENT') return false;
-
-        return true;
+        return interaction.isButton();
     }
 
     /**
@@ -130,6 +128,8 @@ module.exports = class Server extends EventEmitter {
         }
 
         const script = this.startScript.split(' ');
+
+        this.logger.warn(`Starting: ${this.startScript}`, `Kirin/${this.name}`);
         this.scriptProcess = childProcess.spawn(script.shift(), script, {
             silent: true,
             async: true,
@@ -142,12 +142,15 @@ module.exports = class Server extends EventEmitter {
         this.scriptProcess.stdin.on('data', (message) => this.kirin.config.displayConsoleMessages ? this.logger.warn(message.toString().trim(), `Kirin/${this.name}|Console/STDIN`) : null);
 
         this.scriptProcess.on('error', (message) => this.kirin.config.displayConsoleMessages ? this.logger.error(message, `Kirin/${this.name}`) : null);
+        this.scriptProcess.once('disconnect', () => this.scriptProcess = null);
         this.scriptProcess.once('close', code => {
+            if (!code) return;
             this.logger.warn(`${this.name} closed with code ${code}`, `Kirin/${this.name}`);
             this.closeProcess();
             this.scriptProcess = null;
         });
         this.scriptProcess.once('exit', code => {
+            if (!code) return;
             this.logger.warn(`${this.name} exited with code ${code}`, `Kirin/${this.name}`);
             this.closeProcess();
             this.scriptProcess = null;
@@ -164,25 +167,20 @@ module.exports = class Server extends EventEmitter {
     async stop(interaction) {
         this.logger.warn(`Stopping ${this.name} by ${interaction.user.tag}`, `Kirin/${this.name}`);
 
-        if (!this.scriptProcess) {
-            this.logger.warn(`${this.name} not running`, `Kirin/${this.name}`);
-            return SafeInteract.reply(interaction, this.kirin.config.messages.process.notRunning);
-        }
+        if (!this.scriptProcess) { this.logger.error(`${this.name} is not connected to Kirin`, `Kirin/${this.name}`); return SafeInteract.reply(interaction, this.kirin.config.messages.process.notRunning); }
 
-        this.closeProcess();
-        return SafeInteract.reply(interaction, this.kirin.config.messages.process.stopping);
+        return SafeInteract.reply(interaction, this.closeProcess() ? this.kirin.config.messages.process.stopping : this.kirin.config.messages.errors.stop);
     }
     
     closeProcess() {
-        if (!this.scriptProcess) return this;
-        if (!this.scriptProcess.killed && this.scriptProcess?.pid) {
-            if (this.scriptProcess.kill(this.kirin.config.stopSignal)) {
-                this.logger.warn(`${this.name} | PID: ${this.scriptProcess.pid} killed with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
-            } else {
-                this.logger.error(`${this.name} | PID: ${this.scriptProcess.pid} unable to kill with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
-            }
+        if (!this.scriptProcess) return false;
+        if (this.scriptProcess.killed || !this.scriptProcess?.pid) return false;
+        if (this.scriptProcess.kill(this.kirin.config.stopSignal)) {
+            this.logger.warn(`${this.name} | PID: ${this.scriptProcess.pid} killed with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
+            return true;
+        } else {
+            this.logger.error(`${this.name} | PID: ${this.scriptProcess.pid} unable to kill with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
+            return false;
         }
-
-        return this;
     }
 }
