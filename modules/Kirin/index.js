@@ -88,16 +88,18 @@ module.exports = class Kirin {
                 const serverAction = interaction.customId.split('_')[1];
 
                 const server = this.servers.find(srv => srv.interactionId === serverId);
-                if (!server || !server?.isActive || !server.interactionFilter(interaction)) return;
+                if (!server || !server?.isActive || !interaction?.member || !server.interactionFilter(interaction)) return;
                 
                 switch (serverAction) {
                     case 'start':
-                        if ((interaction.memberPermissions && this.config.serverStartPermissions.lenght) && !interaction.memberPermissions.has(this.config.serverStartPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
+                        if (!interaction.member.permissions.has(this.config.serverStartPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
                         if (server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.alreadyRunning);
+                        
                         return server.start(interaction);
                     case 'stop':
-                        if ((interaction.memberPermissions && this.config.serverStopPermissions.lenght) && !interaction.memberPermissions.has(this.config.serverStopPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
+                        if (!interaction.member.permissions.has(this.config.serverStopPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
                         if (!server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.notRunning);
+                        
                         return server.stop(interaction);
                 }
             }
