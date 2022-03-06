@@ -5,15 +5,15 @@
 # Create a new server in the server list
 # Example:
 # server:
-#   - serverId: "server1"       # Unique server id (required)
-#     startScript: "./start.sh" # command or script to start the server (required) eg: "./start.sh", "./start.bat", "java -jar server1.jar"
-#     startScriptPath: "./"     # Path to where the start script should be executed. [This is mostly the root folder of your server](required)
-#     host: ""                  # IP of the server [If your server is running on the same computer as your server, we recommend you to use localhost or 127.0.0.1 as the IP address](required)
-#     port: 25565               # Port of the server (required)
-#     guildId: ""               # Discord server id where the message will be sent [rightclick the Discord server icon then click the copy id to get guildId](required)
-#     channelId: ""             # Discord channel id where the message will be sent[rightclick a text channel from the Discord server of your guildId then click copy id to get channelId](required)
-#     messageId: ""             # Discord bot message id where to edit when the server is online, THIS NEEDS TO BE A MESSAGE FROM THIS BOT [rightclick the message from the Discord channel of your guildId then click copy id to get messageId](required)
-#     message:                  # Customize your message (required)
-#       name: "My Server"                           # Message content (optional)
-#       description: "This is a server description" # Message content (optional)
-#       color: "#00ff00"                            # Message color [will use default color from bot's config.yml if not set](optional)
+#   - serverId: "server1"                                 # Unique server id (required)
+#     startScript: "java -jar server.jar" or "./start.sh" # command or script to start the server [We recognized using commandline arguments here because for some reason stop button's not working if ran from script file](required) eg: "./start.sh", "./start.bat", "java -jar server1.jar"
+#     startScriptPath: "./"                               # Path to where the start script should be executed. [This is mostly the root folder of your server](required)
+#     host: ""                                            # IP of the server [If your server is running on the same computer as your server, we recommend you to use localhost or 127.0.0.1 as the IP address](required)
+#     port: 25565                                         # Port of the server (required)
+#     guildId: ""                                         # Discord server id where the message will be sent [rightclick the Discord server icon then click the copy id to get guildId](required)
+#     channelId: ""                                       # Discord channel id where the message will be sent[rightclick a text channel from the Discord server of your guildId then click copy id to get channelId](required)
+#     messageId: ""                                       # Discord bot message id where to edit when the server is online, THIS NEEDS TO BE A MESSAGE FROM THIS BOT [rightclick the message from the Discord channel of your guildId then click copy id to get messageId](required)
+#     message:                                            # Customize your message (required)
+#       name: "My Server"                                 # Message content (optional)
+#       description: "This is a server description"       # Message content (optional)
+#       color: "#00ff00"                                  # Message color [will use default color from bot's config.yml if not set](optional)
