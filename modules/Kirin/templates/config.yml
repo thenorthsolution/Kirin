@@ -2,7 +2,7 @@
 serverListFile: '{rootDir}/serverlist.yml'
 
 # Discord permissions needs to start the servers
-serverStartPermissions: ['SEND_MESSAGES']
+serverStartPermissions: ['VIEW_CHANNEL']
 
 # Display console messages
 displayConsoleMessages: false
@@ -52,6 +52,13 @@ messages:
   buttons:
     start: 'Start'
     stop: 'Stop'
+  errors:
+    stop:
+      content: 'Could not stop server'
+      ephemeral: true
+    start:
+      content: 'Could not start server'
+      ephemeral: true
   process:
     alreadyRunning:
       content: 'Server is already running or starting'
