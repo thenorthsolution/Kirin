@@ -41,7 +41,7 @@ module.exports = class Kirin {
 
     /**
      * 
-     * @returns {JSON}
+     * @returns {Object}
      */
     getConfig() {
         const config = fs.readFileSync(`./${this.Client.AxisUtility.config.modulesFolder}/Kirin/templates/config.yml`, 'utf8');
