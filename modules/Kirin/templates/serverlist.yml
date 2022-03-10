@@ -4,7 +4,7 @@
 # ==========================================================
 # Create a new server in the server list
 # Example:
-# server:
+# servers:
 #   - serverId: "server1"                                 # Unique server id (required)
 #     startScript: "java -jar server.jar" or "./start.sh" # command or script to start the server [We recognized using commandline arguments here because for some reason stop button's not working if ran from script file](required) eg: "./start.sh", "./start.bat", "java -jar server1.jar"
 #     startScriptPath: "./"                               # Path to where the start script should be executed. [This is mostly the root folder of your server](required)
