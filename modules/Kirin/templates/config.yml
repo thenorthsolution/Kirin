@@ -21,6 +21,13 @@ stop:
   allowedPermissions: ['ADMINISTRATOR']
   allowedRoles: []
 
+# Restart server options (Experimental and not recommended)
+restart:
+  enabled: false
+  addButton: true
+  allowedPermissions: ['ADMINISTRATOR']
+  allowedRoles: []
+
 # Stop servers when the bot stopped
 stopServerOnExit: false
 
@@ -67,6 +74,7 @@ messages:
   buttons:
     start: 'Start'
     stop: 'Stop'
+    restart: 'Restart'
   errors:
     onlineServersLimitMessage:
       content: 'The maximum number of online servers has been reached.'
@@ -92,6 +100,9 @@ messages:
       ephemeral: true
     stopping:
       content: 'Stopping server...'
+      ephemeral: true
+    restarting:
+      content: 'Restarting server...'
       ephemeral: true
     noPermissions:
       content: 'You do not have the required permissions to do this action'
