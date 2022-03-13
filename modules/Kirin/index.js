@@ -98,19 +98,40 @@ module.exports = class Kirin {
 
                 switch (serverAction) {
                     case 'start':
-                        if (!interaction.member.permissions.has(this.config.serverStartPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
+                        if (!this.checkPermissions(interaction.member, this.config.start.allowedPermissions, this.config.start.allowedRoles)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
                         if (server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.alreadyRunning);
                         if (this.config.onlineServersLimit != 0 && this.onlineServers().length >= this.config.onlineServersLimit) return SafeInteract.reply(interaction, this.config.messages.errors.onlineServersLimitMessage);
                         
                         return server.start(interaction);
                     case 'stop':
-                        if (!interaction.member.permissions.has(this.config.serverStopPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
+                        if (!this.checkPermissions(interaction.member, this.config.stop.allowedPermissions, this.config.stop.allowedRoles)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
                         if (!server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.notRunning);
                         
                         return server.stop(interaction);
+                    case 'restart':
+                        if (!this.checkPermissions(interaction.member, this.config.restart.allowedPermissions, this.config.restart.allowedRoles)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
+                        if (!server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.notRunning);
+
+                        return server.restart(interaction);
                 }
             }
         );
+    }
+
+    /**
+     * 
+     * @param {Discord.GuildMember} member 
+     * @param {Object[]} allowedPermissions 
+     * @param {Object[]} allowedRoles 
+     * @returns 
+     */
+    checkPermissions(member, allowedPermissions, allowedRoles) {
+        if (!member) return false;
+
+        if (allowedPermissions.length && member.permissions.has(allowedPermissions)) return true;
+        if (allowedRoles.length && member.roles.some(role => allowedRoles.includes(role.id) || allowedRoles.includes(role.name))) return true;
+
+        return false;
     }
 
     disabledCommands() {
