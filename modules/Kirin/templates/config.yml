@@ -1,19 +1,25 @@
 # Where your server list is stored
 serverListFile: '{rootDir}/serverlist.yml'
 
-# Discord permissions needs to start the servers
-serverStartPermissions: ['VIEW_CHANNEL']
-
 # Display console messages
 displayConsoleMessages: false
 
-# Add stop button
-addStopButton: true
 # List of disabled kirin commands
 disabledCommands: []
 
-# Discord permissions needs to stop the servers
-serverStopPermissions: ['ADMINISTRATOR']
+# Start options
+start:
+  enabled: true
+  addButton: true
+  allowedPermissions: ['VIEW_CHANNEL']
+  allowedRoles: []
+
+# Stop options
+stop:
+  enabled: true
+  addButton: true
+  allowedPermissions: ['ADMINISTRATOR']
+  allowedRoles: []
 
 # Stop servers when the bot stopped
 stopServerOnExit: false
@@ -72,6 +78,9 @@ messages:
       content: 'Could not start server'
       ephemeral: true
   process:
+    disabled:
+      content: 'This action is disabled'
+      ephemeral: true
     alreadyRunning:
       content: 'Server is already running or starting'
       ephemeral: true
