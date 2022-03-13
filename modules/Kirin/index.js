@@ -30,13 +30,18 @@ module.exports = class Kirin {
     getCommands() {
         const commandsFolder = fs.readdirSync(`./${this.Client.AxisUtility.config.modulesFolder}/Kirin/commands/`, 'utf8').filter(file => file.endsWith('.js'));
 
-        return commandsFolder.map(file => {
+        const disabledCommands = this.disabledCommands();
+        let commands = [];
+        
+        for (const file of commandsFolder) {
             try {
-                return require(`./commands/${file}`)(this).command;
+                commands = [...commands, ...require(`./commands/${file}`)(this).commands];
             } catch (error) {
-                this.logger.error(error, 'Kirin');
+                this.logger.error(error, 'Kirin/Command');
             }
-        });
+        }
+        
+        return commands.filter(cmd => !disabledCommands.includes(cmd.name));
     }
 
     /**
@@ -88,26 +93,58 @@ module.exports = class Kirin {
              * @param {Discord.ButtonInteraction} interaction 
              */
             async interaction => {
+                if (!interaction.isButton()) return;
                 const serverId = interaction.customId.split('_')[0];
                 const serverAction = interaction.customId.split('_')[1];
 
                 const server = this.servers.find(srv => srv.interactionId === serverId);
-                if (!server || !server?.isActive || !interaction?.member || !server.interactionFilter(interaction)) return;
+                if (!server || !server?.isActive || !interaction.member || !server.interactionFilter(interaction)) return;
 
                 switch (serverAction) {
                     case 'start':
-                        if (!interaction.member.permissions.has(this.config.serverStartPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
+                        if (!this.checkPermissions(interaction.member, this.config.start.allowedPermissions, this.config.start.allowedRoles)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
                         if (server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.alreadyRunning);
                         if (this.config.onlineServersLimit != 0 && this.onlineServers().length >= this.config.onlineServersLimit) return SafeInteract.reply(interaction, this.config.messages.errors.onlineServersLimitMessage);
                         
                         return server.start(interaction);
                     case 'stop':
-                        if (!interaction.member.permissions.has(this.config.serverStopPermissions)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
+                        if (!this.checkPermissions(interaction.member, this.config.stop.allowedPermissions, this.config.stop.allowedRoles)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
                         if (!server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.notRunning);
                         
                         return server.stop(interaction);
+                    case 'restart':
+                        if (!this.checkPermissions(interaction.member, this.config.restart.allowedPermissions, this.config.restart.allowedRoles)) return SafeInteract.reply(interaction, this.config.messages.process.noPermissions);
+                        if (!server.scriptProcess) return SafeInteract.reply(interaction, this.config.messages.process.notRunning);
+
+                        return server.restart(interaction);
                 }
             }
         );
+    }
+
+    /**
+     * 
+     * @param {Discord.GuildMember} member 
+     * @param {Object[]} allowedPermissions 
+     * @param {Object[]} allowedRoles 
+     * @returns 
+     */
+    checkPermissions(member, allowedPermissions, allowedRoles) {
+        if (!member) return false;
+
+        if (allowedPermissions.length && member.permissions.has(allowedPermissions)) return true;
+        if (allowedRoles.length && member.roles.cache.some(role => allowedRoles.includes(role.id) || allowedRoles.includes(role.name))) return true;
+
+        return false;
+    }
+
+    disabledCommands() {
+        const disabledCommands = [...this.config.disabledCommands];
+
+        if (!this.config.restart.enabled) disabledCommands.push('restart-server');
+        if (!this.config.start.enabled) disabledCommands.push('start-server');
+        if (!this.config.stop.enabled) disabledCommands.push('stop-server');
+        
+        return disabledCommands;
     }
 }

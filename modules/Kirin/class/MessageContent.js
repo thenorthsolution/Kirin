@@ -11,8 +11,7 @@ module.exports = class MessageContent {
         this.ping = null;
         this.content = {
             content: ' ',
-            embeds: [],
-            components: []
+            embeds: []
         };
     }
 
@@ -41,9 +40,13 @@ module.exports = class MessageContent {
     }
 
     addComponents(ping = { status: 'OFFLINE' }) {
-        this.content.components = [
-            new Discord.MessageActionRow().addComponents(this.getButton(ping))
-        ];
+        const buttons = this.getButton(ping);
+        
+        this.content.components = buttons.length ? [
+            new Discord.MessageActionRow().addComponents(buttons)
+        ] : [];
+
+        return this;
     }
 
     getButton(ping) {
@@ -59,9 +62,17 @@ module.exports = class MessageContent {
             .setStyle('DANGER')
             .setDisabled(ping === 'OFFLINE' || !!!this.server.scriptProcess);
 
-        const buttons = [startButton];
-        if (this.server.kirin.config.addStopButton) buttons.push(stopButton);
+        const restartButton = new Discord.MessageButton()
+            .setCustomId(this.server.interactionId + '_restart')
+            .setLabel(this.server.kirin.config.messages.buttons.restart)
+            .setStyle('SECONDARY')
+            .setDisabled(ping === 'OFFLINE' || !!!this.server.scriptProcess);
 
-        return buttons;
+        const buttons = [];
+        if (this.server.kirin.config.start.enabled && this.server.kirin.config.start.addButton) buttons.push(startButton);
+        if (this.server.kirin.config.stop.enabled && this.server.kirin.config.stop.addButton) buttons.push(stopButton);
+        if (this.server.kirin.config.restart.enabled && this.server.kirin.config.restart.addButton) buttons.push(restartButton);
+
+        return buttons.filter(button => this.server.kirin.config.deleteDisabledButtons && !button.disabled);
     }
 }

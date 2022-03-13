@@ -72,7 +72,7 @@ module.exports = class Server extends EventEmitter {
 
     async ping() {
         const response = await this.kirin.minecraftProtocol.ping({ host: this.host, port: this.port, closeTimeout: this.kirin.config.pingServers.pingTimeoutMilliseconds }).catch(err => {
-            this.logger.error(`${this.name} ping error: ${err.message}`, `Kirin/${this.name}`);
+            if (!this.kirin.config.hidePingErrors) this.logger.error(`${this.name} ping error: ${err.message}`, `Kirin/${this.name}`);
 
             return {
                 status: 'OFFLINE',
@@ -109,19 +109,20 @@ module.exports = class Server extends EventEmitter {
 
     /**
      * 
-     * @param {Discord.ButtonInteraction} interaction 
+     * @param {Discord.Integration} interaction 
      * @returns {Boolean}
      */
     interactionFilter(interaction) {
-        return interaction.isButton();
+        return !!interaction;
     }
 
     /**
      * 
-     * @param {Discord.ButtonInteraction} interaction 
+     * @param {Discord.Integration} interaction 
      * @returns 
      */
     async start(interaction) {
+        if (!this.kirin.config.start.enabled) return SafeInteract.reply(interaction, this.kirin.config.messages.process.disabled); 
         this.logger.warn(`Starting ${this.name} by ${interaction.user.tag}`, `Kirin/${this.name}`);
 
         if (this.scriptProcess) {
@@ -129,9 +130,80 @@ module.exports = class Server extends EventEmitter {
             return SafeInteract.reply(interaction, this.kirin.config.messages.process.alreadyRunning);
         }
 
-        const script = this.startScript.split(' ');
+        const spawnProcess = this.spawnProcess();
+        this.emit('start', spawnProcess ? null : new Error('Cannot spawn process'));
 
+        return SafeInteract.reply(interaction, spawnProcess ? this.kirin.config.messages.process.starting : this.kirin.config.messages.errors.start);
+    }
+
+    /**
+     * 
+     * @param {Discord.Integration} interaction 
+     * @returns 
+     */
+    async stop(interaction) {
+        if (!this.kirin.config.stop.enabled) return SafeInteract.reply(interaction, this.kirin.config.messages.process.disabled);
+        this.logger.warn(`Stopping ${this.name} by ${interaction.user.tag}`, `Kirin/${this.name}`);
+
+        if (!this.scriptProcess) {
+            this.logger.error(`${this.name} is not connected to Kirin`, `Kirin/${this.name}`);
+            return SafeInteract.reply(interaction, this.kirin.config.messages.process.notRunning);
+        }
+
+        const closeProcess = this.closeProcess();
+        this.emit('stop', closeProcess ? null : new Error('Could not stop process'));
+
+        return SafeInteract.reply(interaction, closeProcess ? this.kirin.config.messages.process.stopping : this.kirin.config.messages.errors.stop);
+    }
+
+    /**
+     * 
+     * @param {Discord.Integration} interaction 
+     * @returns 
+     */
+    async restart(interaction) {
+        if (!this.kirin.config.restart.enabled) return SafeInteract.reply(interaction, this.kirin.config.messages.process.disabled);
+        this.logger.warn(`Restarting ${this.name} by ${interaction.user.tag}`, `Kirin/${this.name}`);
+
+        if (!this.scriptProcess) {
+            this.logger.error(`${this.name} is not connected to Kirin`, `Kirin/${this.name}`);
+            return SafeInteract.reply(interaction, this.kirin.config.messages.process.notRunning);
+        }
+
+        const closeProcess = this.closeProcess();
+        if (!closeProcess) return SafeInteract.reply(interaction, this.kirin.config.messages.errors.restart);
+
+        this.scriptProcess.on('exit', async (code) => {
+            await this.sleep(1000);
+            this.logger.warn(`Restarting ${this.name} | Exit code ${code}`, `Kirin/${this.name}`);
+            if (this.spawnProcess()) {
+                this.logger.warn(`Starting ${this.name} | Restarted`, `Kirin/${this.name}`);
+                this.emit('restart', null);
+            } else {
+                this.logger.error(`Restarting ${this.name} | Failed to spawn`, `Kirin/${this.name}`);
+                this.emit('restart', new Error(`Failed to spawn child process`));
+            }
+        });
+
+        return SafeInteract.reply(interaction, this.kirin.config.messages.process.restarting);
+    }
+
+    closeProcess() {
+        if (!this.scriptProcess) return false;
+        if (this.scriptProcess.killed || !this.scriptProcess?.pid) return false;
+        if (this.scriptProcess.kill(this.kirin.config.stopSignal)) {
+            this.logger.warn(`${this.name} | PID: ${this.scriptProcess.pid} killed with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
+            return true;
+        } else {
+            this.logger.error(`${this.name} | PID: ${this.scriptProcess.pid} unable to kill with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
+            return false;
+        }
+    }
+
+    spawnProcess() {
         this.logger.warn(`Starting: ${this.startScript}`, `Kirin/${this.name}`);
+
+        const script = this.startScript.split(' ');
         this.scriptProcess = childProcess.spawn(script.shift(), script, {
             silent: true,
             async: true,
@@ -156,31 +228,10 @@ module.exports = class Server extends EventEmitter {
             this.scriptProcess = null;
         });
 
-        return SafeInteract.reply(interaction, this.kirin.config.messages.process.starting);
+        return !!this.scriptProcess;
     }
 
-    /**
-     * 
-     * @param {Discord.ButtonInteraction} interaction 
-     * @returns 
-     */
-    async stop(interaction) {
-        this.logger.warn(`Stopping ${this.name} by ${interaction.user.tag}`, `Kirin/${this.name}`);
-
-        if (!this.scriptProcess) { this.logger.error(`${this.name} is not connected to Kirin`, `Kirin/${this.name}`); return SafeInteract.reply(interaction, this.kirin.config.messages.process.notRunning); }
-
-        return SafeInteract.reply(interaction, this.closeProcess() ? this.kirin.config.messages.process.stopping : this.kirin.config.messages.errors.stop);
-    }
-    
-    closeProcess() {
-        if (!this.scriptProcess) return false;
-        if (this.scriptProcess.killed || !this.scriptProcess?.pid) return false;
-        if (this.scriptProcess.kill(this.kirin.config.stopSignal)) {
-            this.logger.warn(`${this.name} | PID: ${this.scriptProcess.pid} killed with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
-            return true;
-        } else {
-            this.logger.error(`${this.name} | PID: ${this.scriptProcess.pid} unable to kill with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
-            return false;
-        }
+    sleep(milliseconds) {
+        return new Promise(resolve => setTimeout(resolve, milliseconds));
     }
 }

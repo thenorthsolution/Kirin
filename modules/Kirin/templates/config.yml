@@ -1,17 +1,35 @@
 # Where your server list is stored
 serverListFile: '{rootDir}/serverlist.yml'
 
-# Discord permissions needs to start the servers
-serverStartPermissions: ['VIEW_CHANNEL']
-
 # Display console messages
 displayConsoleMessages: false
 
-# Add stop button
-addStopButton: true
+# List of disabled kirin commands
+disabledCommands: []
 
-# Discord permissions needs to stop the servers
-serverStopPermissions: ['ADMINISTRATOR']
+# Start options
+start:
+  enabled: true
+  addButton: true
+  allowedPermissions: ['VIEW_CHANNEL']
+  allowedRoles: []
+
+# Stop options
+stop:
+  enabled: true
+  addButton: true
+  allowedPermissions: ['ADMINISTRATOR']
+  allowedRoles: []
+
+# Restart server options (Experimental and not recommended)
+restart:
+  enabled: false
+  addButton: true
+  allowedPermissions: ['ADMINISTRATOR']
+  allowedRoles: []
+
+# Hide ping errors from console
+hidePingErrors: true
 
 # Stop servers when the bot stopped
 stopServerOnExit: false
@@ -24,16 +42,13 @@ stopSignal: 'SIGINT'
 # If you set this to 0, there is no limit
 onlineServersLimit: 0
 
+# Delete disabled buttons
+deleteDisabledButtons: true
+
 # Options for pinging servers
 pingServers:
   # Add status fields to server message embeds
   displayServerStatus: true
-
-  # Disable start buttons when the server is online
-  disableStartButtonWhenOnline: true
-
-  # Disable stop buttons when the server is offline
-  disableStopButtonWhenOffline: true
 
   # Server ping interval
   pingIntervalMilliseconds: 5000
@@ -49,6 +64,8 @@ messages:
   status:
     online: 'Online'
     offline: 'Offline'
+    onlineIndicator: ':green_circle: *Online*'
+    offlineIndicator: ':red_circle: *Offline*'
   fieldTitles:
     status: 'Status'
     players: 'Players'
@@ -56,6 +73,7 @@ messages:
   buttons:
     start: 'Start'
     stop: 'Stop'
+    restart: 'Restart'
   errors:
     onlineServersLimitMessage:
       content: 'The maximum number of online servers has been reached.'
@@ -67,6 +85,9 @@ messages:
       content: 'Could not start server'
       ephemeral: true
   process:
+    disabled:
+      content: 'This action is disabled'
+      ephemeral: true
     alreadyRunning:
       content: 'Server is already running or starting'
       ephemeral: true
@@ -78,6 +99,9 @@ messages:
       ephemeral: true
     stopping:
       content: 'Stopping server...'
+      ephemeral: true
+    restarting:
+      content: 'Restarting server...'
       ephemeral: true
     noPermissions:
       content: 'You do not have the required permissions to do this action'
