@@ -90,6 +90,7 @@ module.exports = class Kirin {
              * @param {Discord.ButtonInteraction} interaction 
              */
             async interaction => {
+                if (!interaction.isButton()) return;
                 const serverId = interaction.customId.split('_')[0];
                 const serverAction = interaction.customId.split('_')[1];
 
