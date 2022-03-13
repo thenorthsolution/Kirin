@@ -64,6 +64,8 @@ messages:
   status:
     online: 'Online'
     offline: 'Offline'
+    onlineIndicator: ':green_circle: *Online*'
+    offlineIndicator: ':red_circle: *Offline*'
   fieldTitles:
     status: 'Status'
     players: 'Players'
