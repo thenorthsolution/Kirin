@@ -30,13 +30,15 @@ module.exports = class Kirin {
     getCommands() {
         const commandsFolder = fs.readdirSync(`./${this.Client.AxisUtility.config.modulesFolder}/Kirin/commands/`, 'utf8').filter(file => file.endsWith('.js'));
 
+        const disabledCommands = this.disabledCommands();
+
         return commandsFolder.map(file => {
             try {
                 return require(`./commands/${file}`)(this).command;
             } catch (error) {
-                this.logger.error(error, 'Kirin');
+                this.logger.error(error, 'Kirin/Command');
             }
-        });
+        }).filter(cmd => !disabledCommands.includes(cmd.name));
     }
 
     /**
@@ -109,5 +111,13 @@ module.exports = class Kirin {
                 }
             }
         );
+    }
+
+    disabledCommands() {
+        const disabledCommands = [...this.config.disabledCommands];
+
+        if (!this.config.restart?.enabled) disabledCommands.push('restart');
+        
+        return disabledCommands;
     }
 }

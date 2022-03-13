@@ -9,6 +9,8 @@ displayConsoleMessages: false
 
 # Add stop button
 addStopButton: true
+# List of disabled kirin commands
+disabledCommands: []
 
 # Discord permissions needs to stop the servers
 serverStopPermissions: ['ADMINISTRATOR']
