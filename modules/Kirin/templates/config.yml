@@ -50,12 +50,6 @@ pingServers:
   # Add status fields to server message embeds
   displayServerStatus: true
 
-  # Disable start buttons when the server is online
-  disableStartButtonWhenOnline: true
-
-  # Disable stop buttons when the server is offline
-  disableStopButtonWhenOffline: true
-
   # Server ping interval
   pingIntervalMilliseconds: 5000
 
