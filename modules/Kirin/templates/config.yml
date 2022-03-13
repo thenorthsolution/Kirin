@@ -24,6 +24,9 @@ stopSignal: 'SIGINT'
 # If you set this to 0, there is no limit
 onlineServersLimit: 0
 
+# Delete disabled buttons
+deleteDisabledButtons: true
+
 # Options for pinging servers
 pingServers:
   # Add status fields to server message embeds

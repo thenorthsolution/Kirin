@@ -11,8 +11,7 @@ module.exports = class MessageContent {
         this.ping = null;
         this.content = {
             content: ' ',
-            embeds: [],
-            components: []
+            embeds: []
         };
     }
 
@@ -41,9 +40,13 @@ module.exports = class MessageContent {
     }
 
     addComponents(ping = { status: 'OFFLINE' }) {
-        this.content.components = [
-            new Discord.MessageActionRow().addComponents(this.getButton(ping))
-        ];
+        const buttons = this.getButton(ping);
+        
+        this.content.components = buttons.length ? [
+            new Discord.MessageActionRow().addComponents(buttons)
+        ] : [];
+
+        return this;
     }
 
     getButton(ping) {
@@ -62,6 +65,6 @@ module.exports = class MessageContent {
         const buttons = [startButton];
         if (this.server.kirin.config.addStopButton) buttons.push(stopButton);
 
-        return buttons;
+        return buttons.filter(button => this.server.kirin.config.deleteDisabledButtons && !button.disabled);
     }
 }
