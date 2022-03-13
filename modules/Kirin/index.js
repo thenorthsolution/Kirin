@@ -31,14 +31,17 @@ module.exports = class Kirin {
         const commandsFolder = fs.readdirSync(`./${this.Client.AxisUtility.config.modulesFolder}/Kirin/commands/`, 'utf8').filter(file => file.endsWith('.js'));
 
         const disabledCommands = this.disabledCommands();
-
-        return commandsFolder.map(file => {
+        let commands = [];
+        
+        for (const file of commandsFolder) {
             try {
-                return require(`./commands/${file}`)(this).command;
+                commands = [...commands, ...require(`./commands/${file}`)(this).commands];
             } catch (error) {
                 this.logger.error(error, 'Kirin/Command');
             }
-        }).filter(cmd => !disabledCommands.includes(cmd.name));
+        }
+        
+        return commands.filter(cmd => !disabledCommands.includes(cmd.name));
     }
 
     /**
@@ -95,7 +98,7 @@ module.exports = class Kirin {
                 const serverAction = interaction.customId.split('_')[1];
 
                 const server = this.servers.find(srv => srv.interactionId === serverId);
-                if (!server || !server?.isActive || !interaction?.member || !server.interactionFilter(interaction)) return;
+                if (!server || !server?.isActive || !interaction.member || !server.interactionFilter(interaction)) return;
 
                 switch (serverAction) {
                     case 'start':
@@ -138,7 +141,9 @@ module.exports = class Kirin {
     disabledCommands() {
         const disabledCommands = [...this.config.disabledCommands];
 
-        if (!this.config.restart?.enabled) disabledCommands.push('restart');
+        if (!this.config.restart.enabled) disabledCommands.push('restart-server');
+        if (!this.config.start.enabled) disabledCommands.push('start-server');
+        if (!this.config.stop.enabled) disabledCommands.push('stop-server');
         
         return disabledCommands;
     }
