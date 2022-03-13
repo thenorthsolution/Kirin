@@ -28,6 +28,9 @@ restart:
   allowedPermissions: ['ADMINISTRATOR']
   allowedRoles: []
 
+# Hide ping errors from console
+hidePingErrors: true
+
 # Stop servers when the bot stopped
 stopServerOnExit: false
 

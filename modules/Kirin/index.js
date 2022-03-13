@@ -129,7 +129,7 @@ module.exports = class Kirin {
         if (!member) return false;
 
         if (allowedPermissions.length && member.permissions.has(allowedPermissions)) return true;
-        if (allowedRoles.length && member.roles.some(role => allowedRoles.includes(role.id) || allowedRoles.includes(role.name))) return true;
+        if (allowedRoles.length && member.roles.cache.some(role => allowedRoles.includes(role.id) || allowedRoles.includes(role.name))) return true;
 
         return false;
     }

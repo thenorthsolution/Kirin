@@ -72,7 +72,7 @@ module.exports = class Server extends EventEmitter {
 
     async ping() {
         const response = await this.kirin.minecraftProtocol.ping({ host: this.host, port: this.port, closeTimeout: this.kirin.config.pingServers.pingTimeoutMilliseconds }).catch(err => {
-            this.logger.error(`${this.name} ping error: ${err.message}`, `Kirin/${this.name}`);
+            if (!this.kirin.config.hidePingErrors) this.logger.error(`${this.name} ping error: ${err.message}`, `Kirin/${this.name}`);
 
             return {
                 status: 'OFFLINE',
