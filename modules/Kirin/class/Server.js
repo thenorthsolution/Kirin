@@ -109,16 +109,16 @@ module.exports = class Server extends EventEmitter {
 
     /**
      * 
-     * @param {Discord.ButtonInteraction} interaction 
+     * @param {Discord.Integration} interaction 
      * @returns {Boolean}
      */
     interactionFilter(interaction) {
-        return interaction.isButton();
+        return !!interaction;
     }
 
     /**
      * 
-     * @param {Discord.ButtonInteraction} interaction 
+     * @param {Discord.Integration} interaction 
      * @returns 
      */
     async start(interaction) {
@@ -138,7 +138,7 @@ module.exports = class Server extends EventEmitter {
 
     /**
      * 
-     * @param {Discord.ButtonInteraction} interaction 
+     * @param {Discord.Integration} interaction 
      * @returns 
      */
     async stop(interaction) {
@@ -158,7 +158,7 @@ module.exports = class Server extends EventEmitter {
 
     /**
      * 
-     * @param {Discord.ButtonInteraction} interaction 
+     * @param {Discord.Integration} interaction 
      * @returns 
      */
     async restart(interaction) {
