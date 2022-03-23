@@ -14,7 +14,8 @@
   },
   "scripts": {
     "start": "node index.js",
-    "test": "node index.js --testmode"
+    "test": "node index.js --testmode",
+    "build": "cd modules && axis pack ../KirinModule.zip"
   },
   "engines": {
     "node": "^16.6.0",
