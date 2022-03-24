@@ -4,7 +4,7 @@
       "name": "kirin",
       "version": "1.6",
       "author": "FalloutStios",
-      "license": "MIT",
+      "license": "GPL-3.0",
       "main": "kirin.falloutstudios.js",
       "files": [
         "Kirin"
