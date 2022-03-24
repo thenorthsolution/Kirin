@@ -1,6 +1,7 @@
 const { InteractionCommandBuilder, MessageCommandBuilder } = require('../../scripts/builders');
 const { SafeInteract } = require('../../scripts/safeActions');
 const makeConfig = require('../../scripts/makeConfig');
+const sysInfo = require('./class/SystemInfo');
 const util = require('fallout-utility');
 const yml = require('yaml');
 const fs = require('fs');
@@ -18,6 +19,7 @@ module.exports = class Kirin {
         this.logger = Client.AxisUtility.logger;
         this.rootDir = './config/kirin';
         this.minecraftProtocol = minecraftProtocol;
+        this.sysInfo = null;
         this.config = this.getConfig();
         this.servers = this.getServers();
         this.commands = this.getCommands();
@@ -76,10 +78,18 @@ module.exports = class Kirin {
     }
 
     async parseServers() {
+        this.logger.log('Updating servers status...');
         for (const server of this.servers) {
+            this.logger.log(`Updating server ${server.name} status...`);
             await server.parse(server.guildId, server.channelId, server.messageId);
-            await server.refreshMessage();
+            server.refreshMessage();
+            this.logger.log(`Server ${server.name} status updated.`);
         }
+
+        this.logger.log('Servers updated.');
+
+        this.sysInfo = await (new sysInfo(this)).getMessage();
+        this.sysInfo.getInfo();
     }
 
     onlineServers() {

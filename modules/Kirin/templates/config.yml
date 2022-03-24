@@ -59,8 +59,42 @@ pingServers:
   # Mark server with 0 max players as offline
   zeroMaxServersAsOffline: true
 
+# System Status Message
+systemstatus:
+  enabled: false
+  updateInterval: 10000
+  showUnavailableInfo: true
+  guildId: ''
+  channelId: ''
+  messageId: ''
+  memory:
+    showUsedMemory: true
+    showFreeMemory: true
+    showTotalMemory: true
+  battery:
+    showBatteryLevel: true
+    showBatteryStatus: true
+
 # You can edit embed status fields here
 messages:
+  systemstatus:
+    title: 'System Status'
+    status:
+      usedMemory: 'Used Memory'
+      freeMomery: 'Free Memory'
+      totalMemory: 'Total Memory'
+      batteryLevel: 'Battery Level'
+      batteryStatus:
+        title: 'Battery Status'
+        charging: 'Charging'
+        notCharging: 'Not Charging'
+    unavailable:
+      memory:
+        title: 'Memory'
+        description: 'Unavailable'
+      battery:
+        title: 'Battery'
+        description: 'Unavailable'
   status:
     online: 'Online'
     offline: 'Offline'

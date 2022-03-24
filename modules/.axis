@@ -1,6 +1,6 @@
 {
   "name": "kirin",
-  "version": "1.5",
+  "version": "1.6",
   "author": "FalloutStios",
   "license": "MIT",
   "main": "kirin.falloutstudios.js",
@@ -15,5 +15,8 @@
   ],
   "description": "Launch your Minecraft servers on Discord using Kirin",
   "repository": "https://github.com/FalloutStudios/Kirin",
-  "dependencies": {}
+  "dependencies": {
+    "minecraft-protocol": "^1.32.1",
+    "systeminformation": "^5.11.9"
+  }
 }
