@@ -2,7 +2,7 @@
   "modules": [
     {
       "name": "kirin",
-      "version": "1.5",
+      "version": "1.7",
       "author": "FalloutStios",
       "license": "GPL-3.0",
       "main": "kirin.falloutstudios.js",
