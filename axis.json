@@ -2,7 +2,7 @@
   "modules": [
     {
       "name": "kirin",
-      "version": "1.6",
+      "version": "1.5",
       "author": "FalloutStios",
       "license": "GPL-3.0",
       "main": "kirin.falloutstudios.js",
@@ -19,6 +19,7 @@
       "repository": "https://github.com/FalloutStudios/Kirin",
       "dependencies": {
         "minecraft-protocol": "^1.32.1",
+        "ms": "^2.1.3",
         "systeminformation": "^5.11.9"
       }
     }

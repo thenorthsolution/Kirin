@@ -140,3 +140,6 @@ messages:
     noPermissions:
       content: 'You do not have the required permissions to do this action'
       ephemeral: true
+    scheduled:
+      content: 'This action is scheduled'
+      ephemeral: true

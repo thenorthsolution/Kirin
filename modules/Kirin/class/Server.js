@@ -4,6 +4,7 @@ const MessageContent = require('./MessageContent');
 const EventEmitter = require('events');
 const Discord = require('discord.js');
 const childProcess = require('child_process');
+const ms = require('ms');
 
 module.exports = class Server extends EventEmitter {
     /**
@@ -131,7 +132,6 @@ module.exports = class Server extends EventEmitter {
         }
 
         const spawnProcess = this.spawnProcess();
-        this.emit('start', spawnProcess ? null : new Error('Cannot spawn process'));
 
         return SafeInteract.reply(interaction, spawnProcess ? this.kirin.config.messages.process.starting : this.kirin.config.messages.errors.start);
     }
@@ -151,7 +151,6 @@ module.exports = class Server extends EventEmitter {
         }
 
         const closeProcess = this.closeProcess();
-        this.emit('stop', closeProcess ? null : new Error('Could not stop process'));
 
         return SafeInteract.reply(interaction, closeProcess ? this.kirin.config.messages.process.stopping : this.kirin.config.messages.errors.stop);
     }
@@ -193,6 +192,7 @@ module.exports = class Server extends EventEmitter {
         if (this.scriptProcess.killed || !this.scriptProcess?.pid) return false;
         if (this.scriptProcess.kill(this.kirin.config.stopSignal)) {
             this.logger.warn(`${this.name} | PID: ${this.scriptProcess.pid} killed with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
+            this.emit('stop', !this.scriptProcess ? null : new Error('Could not stop process'));
             return true;
         } else {
             this.logger.error(`${this.name} | PID: ${this.scriptProcess.pid} unable to kill with ${this.kirin.config.stopSignal}`, `Kirin/${this.name}`);
@@ -228,10 +228,45 @@ module.exports = class Server extends EventEmitter {
             this.scriptProcess = null;
         });
 
+        this.emit('start', this.scriptProcess ? null : new Error('Cannot spawn process'));
         return !!this.scriptProcess;
     }
 
     sleep(milliseconds) {
         return new Promise(resolve => setTimeout(resolve, milliseconds));
+    }
+
+    /**
+     * 
+     * @param {Discord.Interaction} interaction 
+     * @param {number} time 
+     */
+    async scheduleStart(interaction, time, callbackChannel) {
+        await SafeInteract.reply(interaction, this.kirin.config.messages.process.scheduled);
+
+        if (callbackChannel) SafeMessage.send(callbackChannel, `Scheduled **${this.name}** to start in **${ms(time, { long: true })}**`);
+        setTimeout(async () => {
+            if (this.scriptProcess) return;
+            if (callbackChannel) await SafeMessage.send(callbackChannel, `Starting **${this.name}**`);
+            const process = this.spawnProcess();
+            if (!process) return SafeMessage.send(callbackChannel, `Failed to start **${this.name}**`);
+        }, time);
+    }
+
+    /**
+     * 
+     * @param {Discord.Interaction} interaction 
+     * @param {number} time 
+     */
+    async scheduleStop(interaction, time, callbackChannel) {
+        await SafeInteract.reply(interaction, this.kirin.config.messages.process.scheduled);
+
+        if (callbackChannel) SafeMessage.send(callbackChannel, `Scheduled **${this.name}** to stop in **${ms(time, { long: true })}**`);
+        setTimeout(async () => {
+            if (!this.scriptProcess) return;
+            if (callbackChannel) await SafeMessage.send(callbackChannel, `Stopping **${this.name}**`);
+            const process = this.closeProcess();
+            if (!process) return SafeMessage.send(callbackChannel, `Failed to stop **${this.name}**`);
+        }, time);
     }
 }
