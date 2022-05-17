@@ -75,13 +75,11 @@ typings/
 # FuseBox cache
 .fusebox/
 
-# Axis
-/.axiscache
-/scripts/
-/config/
-/index.js
-start.sh
-package.json.old
-KirinModule.zip
-KirinBot.zip
-*.zip
+# Reciple
+modules/
+config/
+
+# Lock files
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
