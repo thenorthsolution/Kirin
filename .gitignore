@@ -79,6 +79,7 @@ typings/
 modules/
 config/
 .rmmcache/
+reciple.yml
 
 # Lock files
 yarn.lock
