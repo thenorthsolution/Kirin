@@ -1,3 +1,4 @@
+export default `
 defaultServerConfig:
   printToConsole: false
   displayPingErrors: false
@@ -30,9 +31,11 @@ messages:
   stopping: 'Stopping **{0}**'
   restarting: 'Restarting **{0}**'
   notRunning: '**{0}** is not running'
+  serverNotFound: 'Server **{0}** not found'
   canNotStop: 'Unable to stop **{0}**'
   alreadyRunning: '**{0}** is already started'
   startFailed: 'Failed to start **{0}**'
+  deleted: '**{0}** does not exists anymore'
   onlineServersLimitReached: 'Online servers limit reached'
   menuPlaceholder: 'Actions'
   menuStartOption: 'Start'
@@ -46,3 +49,4 @@ messages:
   onlineEmbedStatus: 'Online'
   offlineEmbedColor: 'DARK_BUT_NOT_BLACK'
   offlineEmbedStatus: 'Offline'
+`.trim();
