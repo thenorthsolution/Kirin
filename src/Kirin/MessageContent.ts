@@ -1,4 +1,4 @@
-import { KirinModule } from '../kirin.reciple';
+import { KirinModule } from './';
 import { KirinServer } from './Server'
 import discord from 'discord.js';
 
@@ -17,7 +17,7 @@ export class MessageContent {
 
     public getMessage() {
         return {
-            content: '',
+            content: ' ',
             attachments: [],
             embeds: [this.getEmbed()],
             components: [this.server.config.useMenu ? this.getMenu() : this.getButtons()]
@@ -30,24 +30,6 @@ export class MessageContent {
             .setPlaceholder(this.kirin.getMessage('menuPlaceholder'))
             .setCustomId(`kirin-server-menu-${this.server.id}`);
 
-        if (this.server.config.start?.addButton && this.server.status == 'ONLINE') {
-            menu.addOptions([
-                {
-                    label: this.kirin.getMessage('menuStartOption'),
-                    value: `kirin-server-start-${this.server.id}`
-                }
-            ]);
-        }
-
-        if (this.server.config.stop?.addButton && this.server.status == 'OFFLINE') {
-            menu.addOptions([
-                {
-                    label: this.kirin.getMessage('menuStopOption'),
-                    value: `kirin-server-stop-${this.server.id}`
-                }
-            ]);
-        }
-
         if (this.server.config.start?.addButton && this.server.status == 'OFFLINE') {
             menu.addOptions([
                 {
@@ -57,7 +39,25 @@ export class MessageContent {
             ]);
         }
 
-        return new discord.MessageActionRow().addComponents([menu]);
+        if (this.server.config.stop?.addButton && this.server.status == 'ONLINE') {
+            menu.addOptions([
+                {
+                    label: this.kirin.getMessage('menuStopOption'),
+                    value: `kirin-server-stop-${this.server.id}`
+                }
+            ]);
+        }
+
+        if (this.server.config.start?.addButton && this.server.status == 'ONLINE') {
+            menu.addOptions([
+                {
+                    label: this.kirin.getMessage('menuStartOption'),
+                    value: `kirin-server-start-${this.server.id}`
+                }
+            ]);
+        }
+
+        return new discord.MessageActionRow().setComponents([menu]);
     }
 
     public getButtons(): discord.MessageActionRow {
@@ -84,7 +84,7 @@ export class MessageContent {
         if (!this.server.config.restart?.addButton) buttons = buttons.filter(b => b.style === 'SECONDARY');
         if (this.kirin.config.deleteDisabledButtons) buttons = buttons.filter(btn => !btn.disabled);
 
-        return new discord.MessageActionRow().addComponents(buttons);
+        return new discord.MessageActionRow().setComponents(buttons);
     }
 
     public getEmbed(): discord.MessageEmbed {
@@ -98,7 +98,9 @@ export class MessageContent {
                 name: `${this.server.config.host}:${this.server.config.port}`
             })
             .setTitle(this.server.config.displayName)
-            .setDescription(this.server.config.description)
+            .setDescription(this.server.config.description || ' ')
+            .setTimestamp(new Date())
+            .setFooter({ text: this.server.id })
             .addFields([
                 {
                     name: `Status`,
@@ -114,7 +116,7 @@ export class MessageContent {
                 },
                 {
                     name: `Version`,
-                    value: this.server.lastPingData?.version ?? 'Unknown',
+                    value: this.server.lastPingData?.version || 'Unknown',
                     inline: true
                 }
             ]);

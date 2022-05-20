@@ -1,6 +1,6 @@
 import { NewPingResult, OldPingResult, ping } from 'minecraft-protocol';
-import { KirinModule, KirinServerConfig } from '../kirin.reciple';
-import { Logger } from 'fallout-utility';
+import { KirinModule, KirinServerConfig } from './';
+import { Logger, splitString } from 'fallout-utility';
 import EventEmitter from 'events';
 import discord from 'discord.js';
 import { RecipleClient } from 'reciple';
@@ -32,6 +32,7 @@ export interface PingData {
 
 export class KirinServer extends EventEmitter {
     public id: string;
+    public deleted: boolean = false;
     public kirin: KirinModule;
     public client: RecipleClient;
     public config: KirinServerOptions;
@@ -64,10 +65,10 @@ export class KirinServer extends EventEmitter {
     }
 
     public async init() {
-        const channel = this.client.channels.cache.get(this.config.channelId) ?? await this.client.channels.fetch(this.config.channelId) ?? undefined;
-        if (channel?.type !== 'GUILD_TEXT') throw new TypeError(`Channel is not a guild text channel`);
+        const channel = this.client.channels.cache.get(this.config.channelId) ?? await this.client.channels.fetch(this.config.channelId).catch(err => this.logger.error(err)) ?? undefined;
+        if (!channel || channel?.type !== 'GUILD_TEXT') throw new TypeError(`Channel is not a guild text channel`);
 
-        const message = this.channel.messages.cache.get(this.config.messageId) ?? await this.channel.messages.fetch(this.config.messageId) ?? undefined;
+        const message = channel.messages.cache.get(this.config.messageId) ?? await channel.messages.fetch(this.config.messageId).catch(err => this.logger.error(err)) ?? undefined;
         if (!message || message.author.id !== this.client.user?.id) throw new TypeError(`Message is not found or not from this bot`);
 
         this.channel = channel;
@@ -79,6 +80,7 @@ export class KirinServer extends EventEmitter {
     public async ping(repeat: boolean = false, sleep?: number) {
         sleep = this.config.pingOptions?.pingIntervalMs ?? sleep;
         if (sleep && this.lastPingData) await new Promise(resolve => setTimeout(resolve, sleep));
+        if (this.deleted) return;
 
         let data = await ping({
             host: this.config.host,
@@ -134,11 +136,14 @@ export class KirinServer extends EventEmitter {
     }
 
     public async start() {
-        if (this.process) throw new Error(`ERROR: ${this.kirin.getMessage('alreadyRunning')}`);
+        if (this.process) throw new Error(`ERROR: ${this.kirin.getMessage('alreadyRunning', this.config.displayName)}`);
+        if (this.deleted) throw new Error(`ERROR: ${this.kirin.getMessage('deleted', this.config.displayName)}`);
         this.logger.warn(`Starting ${this.config.displayName}...`);
 
-        this.process = childProcess.spawn(this.config.script, [], {
+        const script = splitString(this.config.script, false, ' ');
+        this.process = childProcess.spawn(script.shift() ?? 'exit', script, {
             cwd: this.config.scriptRootDir || process.cwd(),
+            env: process.env,
             detached: !this.config.stopServerOnExit
         });
 
@@ -160,20 +165,21 @@ export class KirinServer extends EventEmitter {
         });
 
         this.emit('start', this.process);
-        return this.process?.connected;
+        return true;
     }
 
     public async stop() {
-        if (!this.process) throw new Error(`ERROR: ${this.kirin.getMessage('notRunning')}`);
+        if (!this.process) throw new Error(`ERROR: ${this.kirin.getMessage('notRunning', this.config.displayName)}`);
+        if (this.deleted) throw new Error(`ERROR: ${this.kirin.getMessage('deleted', this.config.displayName)}`);
         if (this.process.killed || !this.process.pid) {
             this.process = undefined;
-            throw new Error(`ERROR: ${this.kirin.getMessage('notRunning')}`);
+            throw new Error(`ERROR: ${this.kirin.getMessage('notRunning', this.config.displayName)}`);
         }
 
         this.logger.warn(`Stopping ${this.config.displayName}...`);
         const stop = this.process.kill(this.config.stopSignal);
 
-        if (!stop) throw new Error(`ERROR: ${this.kirin.getMessage('canNotStop')}`);
+        if (!stop) throw new Error(`ERROR: ${this.kirin.getMessage('canNotStop', this.config.displayName)}`);
 
         this.emit('stop', this.process);
         return stop;
