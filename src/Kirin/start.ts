@@ -2,11 +2,10 @@ import discord from 'discord.js';
 import { KirinServer } from './Server';
 import { trimChars } from 'fallout-utility';
 
-export default async (server: KirinServer, interaction: discord.ButtonInteraction|discord.SelectMenuInteraction) => {
+export default async (server: KirinServer, interaction: discord.ButtonInteraction|discord.SelectMenuInteraction|discord.CommandInteraction) => {
     const kirin = server.kirin;
 
-    if (!interaction.deferred) await interaction.deferReply({ ephemeral: true });
-
+    if (!interaction.deferred && !interaction.replied) await interaction.deferReply({ ephemeral: true });
     if (kirin.config.onlineServersLimit > 0 && kirin.servers.filter(s => s.status === 'ONLINE' || !!s.process).length >= kirin.config.onlineServersLimit) {
         interaction.editReply({
             embeds: [
@@ -20,8 +19,8 @@ export default async (server: KirinServer, interaction: discord.ButtonInteractio
 
     let _err: string|undefined;
     const start = await server.start().catch((err: Error) => {
+        if (!err.message.startsWith('ERROR: ')) return server.logger.error(err);
         _err = err.message;
-        server.logger.error(err);
     }) ?? undefined;
 
     if (!start) {
@@ -29,8 +28,7 @@ export default async (server: KirinServer, interaction: discord.ButtonInteractio
             embeds: [
                 new discord.MessageEmbed()
                     .setDescription(
-                        typeof _err == 'string' && _err.startsWith('ERROR: ') ? 
-                        trimChars(_err, 'ERROR: ') : 
+                        _err ? trimChars(_err, 'ERROR: ') : 
                         kirin.getMessage('startFailed', server.config.displayName)
                     )
                     .setColor('RED')
