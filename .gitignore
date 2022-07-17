@@ -78,10 +78,4 @@ typings/
 # Reciple
 modules/
 config/
-.rmmcache/
 reciple.yml
-
-# Lock files
-yarn.lock
-package-lock.json
-pnpm-lock.yaml
