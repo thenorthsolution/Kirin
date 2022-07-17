@@ -1,5 +1,5 @@
-import { ChildProcess } from 'child_process';
-import { Logger } from 'fallout-utility';
+import { ChildProcess, spawn } from 'child_process';
+import { Logger, splitString } from 'fallout-utility';
 import { KirinMain } from '../kirin';
 import EventEmitter from 'events';
 import { GuildTextBasedChannel, Message } from 'discord.js';
@@ -86,6 +86,23 @@ export class Server extends EventEmitter {
         this.logger = this.kirin.logger.cloneLogger({ loggerName: this.options.name ?? this.id });
     }
 
+    public async start(): Promise<void> {
+        this.logger.debug(`Starting ${this.id}`);
+
+        const [command, ...args] = splitString(this.script, true);
+        
+        this.process = spawn(command, args, {
+            cwd: this.root,
+            env: process.env,
+            detached: !!this.kirin.config.process.stopServersOnExit,
+            killSignal: this.stopSignal,
+        });
+
+        this.process.stdout?.on('data', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.log(message.toString().trim()) : this.logger.debug(message.toString().trim()));
+        this.process.stderr?.on('data', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.err(message.toString().trim()) : this.logger.debug(message.toString().trim()));
+        this.process.stdin?.on('data', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.log(message.toString().trim()) : this.logger.debug(message.toString().trim()));
+    }
+
     public async ping(loop: boolean): Promise<undefined|NewPingResult> {
         const response = await ping({ host: this.host, port: this.port, closeTimeout: this.kirin.config.ping.pingTimeoutMs })
             .then(result => {
@@ -96,7 +113,7 @@ export class Server extends EventEmitter {
                 if (this.kirin.config.ping.showPingErrorMessages) this.logger.err(err);
             });
 
-        const status = this.kirin.config.ping.zeroMaxServersAsOffline && !response?.players.max || !response ? 'OFFLINE' : 'ONLINE';
+        const status = this.kirin.config.ping.zeroMaxServersAsOffline && !response?.players.max || !response || !this.process ? 'OFFLINE' : 'ONLINE';
         this.status = status;
         this.lastPingData = {
             status,
@@ -106,20 +123,25 @@ export class Server extends EventEmitter {
         };
 
         this.updateMessage();
+        this.logger.debug(`Ping status updated!`);
         this.emit('ping', this.lastPingData);
-        if (loop) await this.ping(loop);
+        if (loop) setTimeout(() => this.ping(loop), this.kirin.config.ping.pingIntervalMs);
         return response ? response : undefined;
     }
 
     public async updateMessage(): Promise<void> {
         if (!this.message) throw new Error(`Message is not defined`);
 
-        await this.message.edit(new MessageContent(this).getData()).catch(() => {});
-        this.emit('messageUpdate', this.message);
+        await this.message.edit(new MessageContent(this).getData())
+        .then(message => {
+            this.logger.debug(`Updated ${this.id} message: ${message.id}`)
+            this.emit('messageUpdate', message);
+        })
+        .catch(err => this.logger.debug('Edit Message Error', err));
     }
 
     public async fetch(): Promise<Server> {
-        const channel = this.kirin.client.channels.cache.get(this.options.channel_id) ?? await this.kirin.client.channels.fetch(this.options.channel_id).catch(() => undefined);
+        const channel = this.kirin.client.channels.cache.get(this.options.channel_id) ?? await this.kirin.client.channels.fetch(this.options.channel_id).catch(err => this.logger.err(err));
         if (!channel?.isText()) {
             this.delete();
             throw new TypeError(`Unknown guild channel: ${this.options.channel_id}`);
@@ -127,7 +149,7 @@ export class Server extends EventEmitter {
 
         this.channel = channel as GuildTextBasedChannel;
         
-        const message = this.channel.messages.cache.get(this.options.message_id) ?? await this.channel.messages.fetch(this.options.message_id).catch(() => undefined);
+        const message = this.channel.messages.cache.get(this.options.message_id) ?? await this.channel.messages.fetch(this.options.message_id).catch(err => this.logger.err(err));
         if (!message) {
             this.delete();
             throw new TypeError(`Unknown message: ${this.options.message_id}`);

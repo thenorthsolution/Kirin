@@ -1,4 +1,4 @@
-import { RecipleClient, RecipleScript } from 'reciple';
+import { MessageCommandBuilder, RecipleClient, RecipleCommandBuilders, RecipleScript } from 'reciple';
 import { Config, KirinConfig } from './Kirin/Config';
 import { Logger, replaceAll } from 'fallout-utility';
 import { Server } from './Kirin/Server';
@@ -9,21 +9,23 @@ export class KirinMain implements RecipleScript {
     public client!: RecipleClient<boolean>;
     public logger!: Logger;
     public servers: Server[] = [];
+    public commands?: RecipleCommandBuilders[] = [];
     
     public async onStart(client: RecipleClient<boolean>): Promise<boolean> {
         this.logger = client.logger.cloneLogger({ loggerName: 'Kirin' });
         this.client = client;
 
         this.logger.log("Starting Kirin...");
-        this.servers = await this.fetchServers();
-        this.logger.log(`Loaded ${this.servers.length} server(s)`);
 
         return true;
     }
 
     public async onLoad(): Promise<void> {
+        this.logger.log(`Loading servers...`);
+        this.servers = await this.fetchServers();
+        this.logger.log(`Loaded ${this.servers.length} server(s)`);
+        
         this.logger.debug(`Pinging all servers...`);
-
         for (const server of this.servers) {
             server.ping(true);
             this.logger.debug(`Pinged ${server.id}`);
@@ -39,8 +41,8 @@ export class KirinMain implements RecipleScript {
         for (const serverOption of serverLists) {
             this.logger.debug(`Creating new server: ${serverOption.id}`);
             const server = new Server({ ...serverOption, kirin: this });
-
-            server.fetch().then(() => servers.push(server)).catch(err => server.logger.err(err));
+            
+            await server.fetch().then(() => servers.push(server)).catch(err => server.logger.err(err));
         }
 
         return servers;

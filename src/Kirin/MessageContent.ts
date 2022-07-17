@@ -4,7 +4,7 @@ import { Server } from './Server';
 export class MessageContent {
     public server: Server;
     public data: MessageEditOptions = {
-        content: '',
+        content: ' ',
         embeds: [],
         components: []
     };
@@ -16,7 +16,6 @@ export class MessageContent {
     public getData(): MessageEditOptions {
         return {
             ...this.data,
-            content: '',
             embeds: [this.makeEmbed()],
             components: this.server.kirin.config.miscellaneous.disableAllButtons ? [] : [this.makeButtons()]
         };
