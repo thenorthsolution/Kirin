@@ -178,8 +178,7 @@ export class KirinMain implements RecipleScript {
                                 .addField('channelId', `\`\`\`\n${message.channel.id}\n\`\`\``);
 
                             const reply = await message.channel.send({ embeds: [embed] });
-
-                            message.edit({ embeds: [embed.addField('messageId', `\`\`\`\n${reply.id}\n\`\`\``)] });
+                            reply.edit({ embeds: [embed.addField('messageId', `\`\`\`\n${reply.id}\n\`\`\``)] });
                         })
                     ]
                 : [])
