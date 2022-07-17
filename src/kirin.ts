@@ -2,7 +2,7 @@ import { InteractionCommandBuilder, RecipleClient, RecipleCommandBuilders, Recip
 import { Logger, replaceAll, escapeRegExp } from 'fallout-utility';
 import { Config, KirinConfig } from './Kirin/Config';
 import { Action, Server } from './Kirin/Server';
-import { GuildMember } from 'discord.js';
+import { AutocompleteInteraction, GuildMember } from 'discord.js';
 
 export class KirinMain implements RecipleScript {
     public versions: string = '2.0.x';
@@ -23,6 +23,7 @@ export class KirinMain implements RecipleScript {
         }
 
         this.client.on('interactionCreate', async interaction => {
+            if (interaction.isAutocomplete()) return this.autoComplete(interaction);
             if (!interaction.isButton()) return;
 
             const splitId = interaction.customId.split('-');
@@ -103,6 +104,20 @@ export class KirinMain implements RecipleScript {
         return servers;
     }
 
+    public async autoComplete(interaction: AutocompleteInteraction): Promise<void> {
+        if (!['start','stop'].some(n => n == interaction.commandName)) return;
+
+        const query = interaction.options.getFocused();
+        const servers = this.servers.filter(s => s.id.includes(query) || s.options.name && s.options.name.includes(query));
+
+        interaction.respond(
+            servers.map(server => ({
+                name: server.options.name ?? server.id,
+                value: server.id
+            }))
+        ).catch(() => {});
+    }
+
     public getCommands(): InteractionCommandBuilder[] {
         return [
             new InteractionCommandBuilder()
@@ -124,8 +139,8 @@ export class KirinMain implements RecipleScript {
                     if (!server) return interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
                     if (!server.process || server.status == 'OFFLINE') return interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped')).catch(() => {});
 
-                    const stop = await server.stop().catch(() => false);
-                    interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
+                    server.start();
+                    interaction.editReply(this.getMessage('starting', 'Starting...')).catch(() => {});
                 }),
             new InteractionCommandBuilder()
                 .setName('stop')
@@ -146,8 +161,8 @@ export class KirinMain implements RecipleScript {
                     if (!server) return interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
                     if (server.process || server.status === 'ONLINE') return interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running')).catch(() => {});
 
-                    server.start();
-                    interaction.editReply(this.getMessage('starting', 'Starting...')).catch(() => {});
+                    const stop = await server.stop().catch(() => false);
+                    interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
                 })
         ];
     }
