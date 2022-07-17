@@ -175,10 +175,10 @@ export class KirinMain implements RecipleScript {
                             const embed = new MessageEmbed()
                                 .setAuthor({ name: 'Messsage Info' })
                                 .setColor(this.getMessage('onlineEmbedColor', 'BLUE'))
-                                .addField('channelId', `\`\`\`\n${message.channel.id}\n\`\`\``);
+                                .addField('channel_id', `\`\`\`\n${message.channel.id}\n\`\`\``);
 
                             const reply = await message.channel.send({ embeds: [embed] });
-                            reply.edit({ embeds: [embed.addField('messageId', `\`\`\`\n${reply.id}\n\`\`\``)] });
+                            reply.edit({ embeds: [embed.addField('message_id', `\`\`\`\n${reply.id}\n\`\`\``)] });
                         })
                     ]
                 : [])
