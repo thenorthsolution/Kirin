@@ -13,9 +13,13 @@ export interface KirinConfig {
         stop: {
             allowedPermissions: PermissionString[];
             allowedRoles: string[];
+        },
+        init: {
+            allowedPermissions: PermissionString[];
         }
     };
     process: {
+        initServerMessageCommant: boolean;
         controlViaCommands: boolean;
         stopServersOnExit: boolean;
         showConsoleMessages: boolean;
@@ -51,9 +55,13 @@ export class Config {
                 stop: {
                     allowedPermissions: ['ADMINISTRATOR'],
                     allowedRoles: ['000000000000000000']
+                },
+                init: {
+                    allowedPermissions: ['MANAGE_MESSAGES']
                 }
             },
             process: {
+                initServerMessageCommant: true,
                 controlViaCommands: true,
                 showConsoleMessages: true,
                 stopServersOnExit: false
