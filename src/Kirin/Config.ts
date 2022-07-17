@@ -57,7 +57,13 @@ export class Config {
                 embedPlayersLabel: 'Online Players',
                 embedPlayersList: '{0}/{1}',
                 embedVersionLabel: 'Server Version',
-                embedVersionValue: '{0}'
+                embedVersionValue: '{0}',
+                unknownAction: 'Unknown interaction',
+                alreadyStarted: 'Server is already running',
+                alreadyStopped: 'Server is already stopped',
+                failedToStop: 'Failed to stop server',
+                starting: 'Starting...',
+                stopping: 'Stopping...'
             }
         };
 

@@ -1,6 +1,6 @@
-import { MessageCommandBuilder, RecipleClient, RecipleCommandBuilders, RecipleScript } from 'reciple';
+import { RecipleClient, RecipleCommandBuilders, RecipleScript } from 'reciple';
+import { Logger, replaceAll, escapeRegExp } from 'fallout-utility';
 import { Config, KirinConfig } from './Kirin/Config';
-import { Logger, replaceAll } from 'fallout-utility';
 import { Server } from './Kirin/Server';
 
 export class KirinMain implements RecipleScript {
@@ -16,6 +16,47 @@ export class KirinMain implements RecipleScript {
         this.client = client;
 
         this.logger.log("Starting Kirin...");
+
+        this.client.on('interactionCreate', async interaction => {
+            if (!interaction.isButton()) return;
+
+            const splitId = interaction.customId.split('-');
+            const action = splitId.pop();
+            const id = splitId.join('-');
+
+            if (!id || !action) return;
+            
+            const server = this.servers.find(s => s.id == id);
+            if (!server) return;
+
+            let error = false;
+            await interaction.deferReply({ ephemeral: true }).catch(err => { this.logger.err(err); error = true; });
+            if (error) return;
+
+            switch (action) {
+                case 'start':
+                    if (server.process || server.status == 'ONLINE') {
+                        interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running')).catch(() => {});
+                        break;
+                    }
+
+                    server.start();
+                    interaction.editReply(this.getMessage('starting', 'Starting...')).catch(() => {});
+
+                    break;
+                case 'stop':
+                    if (!server.process || server.status == 'OFFLINE') {
+                        interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped')).catch(() => {});
+                        break;
+                    }    
+
+                    const stop = await server.stop().catch(() => false);
+                    interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
+                    break;
+                default:
+                    interaction.editReply(this.getMessage('unknownAction', 'Unknown interaction')).catch(() => {});
+            }
+        });
 
         return true;
     }
@@ -53,7 +94,7 @@ export class KirinMain implements RecipleScript {
 
         let id = 0;
         for (const placeholder of placeholders) {
-            msg = replaceAll(msg, `{${id}}`, placeholder);
+            msg = replaceAll(msg, escapeRegExp(`{${id}}`), escapeRegExp(placeholder));
             id++;
         }
 

@@ -142,7 +142,7 @@ export class Server extends EventEmitter {
                 if (this.kirin.config.ping.showPingErrorMessages) this.logger.err(err);
             });
 
-        const status = this.kirin.config.ping.zeroMaxServersAsOffline && !response?.players.max || !response || !this.process ? 'OFFLINE' : 'ONLINE';
+        const status = this.kirin.config.ping.zeroMaxServersAsOffline && !response?.players.max || !response ? 'OFFLINE' : 'ONLINE';
         this.status = status;
         this.lastPingData = {
             status,
