@@ -86,7 +86,8 @@ export class Server extends EventEmitter {
         this.logger = this.kirin.logger.cloneLogger({ loggerName: this.options.name ?? this.id });
     }
 
-    public async start(): Promise<void> {
+    public start(): void {
+        if (this.process) throw new Error('Process is already running');
         this.logger.debug(`Starting ${this.id}`);
 
         const [command, ...args] = splitString(this.script, true);
@@ -99,8 +100,36 @@ export class Server extends EventEmitter {
         });
 
         this.process.stdout?.on('data', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.log(message.toString().trim()) : this.logger.debug(message.toString().trim()));
-        this.process.stderr?.on('data', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.err(message.toString().trim()) : this.logger.debug(message.toString().trim()));
+        this.process.stderr?.on('data', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.error(message.toString().trim()) : this.logger.debug(message.toString().trim()));
         this.process.stdin?.on('data', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.log(message.toString().trim()) : this.logger.debug(message.toString().trim()));
+        this.process.on('error', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.error(message) : this.logger.debug(message));
+
+        this.process.on('close', (code, signal) => {
+            this.logger.log(`${this.id} closed: ${code}; signal: ${signal}`);
+            this.process = undefined;
+        });
+
+        this.process.on('exit', (code, signal) => {
+            this.logger.log(`${this.id} exited: ${code}; signal: ${signal}`);
+            this.process = undefined;
+        });
+    }
+
+    public async stop(): Promise<boolean> {
+        if (!this.process) throw new Error('Process is already stopped');
+
+        if (this.process.kill(this.stopSignal)) {
+            if (!this.process || this.process.killed) return true;
+
+            return new Promise((res, rej) => {
+                const timeout = setTimeout(() => rej(new Error('Failed to stop process')), 3000);
+
+                this.process?.once('close', () => { res(true); clearTimeout(timeout); });
+                this.process?.once('exit', () => { res(true); clearTimeout(timeout); });
+            });
+        } else {
+            return false;
+        }
     }
 
     public async ping(loop: boolean): Promise<undefined|NewPingResult> {
