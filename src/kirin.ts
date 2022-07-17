@@ -1,7 +1,8 @@
 import { RecipleClient, RecipleCommandBuilders, RecipleScript } from 'reciple';
 import { Logger, replaceAll, escapeRegExp } from 'fallout-utility';
 import { Config, KirinConfig } from './Kirin/Config';
-import { Server } from './Kirin/Server';
+import { Action, Server } from './Kirin/Server';
+import { GuildMember } from 'discord.js';
 
 export class KirinMain implements RecipleScript {
     public versions: string = '2.0.x';
@@ -26,12 +27,21 @@ export class KirinMain implements RecipleScript {
 
             if (!id || !action) return;
             
+            const permissions = this.config.permissions[action as Action];
             const server = this.servers.find(s => s.id == id);
             if (!server) return;
 
             let error = false;
             await interaction.deferReply({ ephemeral: true }).catch(err => { this.logger.err(err); error = true; });
             if (error) return;
+
+            const hasPermissions = !permissions.allowedPermissions.length || permissions.allowedPermissions.length && interaction.memberPermissions?.has(permissions.allowedPermissions);
+            const hasRole = (interaction.member as GuildMember).roles.cache.find(r => permissions.allowedRoles.some(pr => pr == r.id || pr == r.name));
+
+            if (!hasRole && !hasPermissions) {
+                interaction.editReply(this.getMessage('noPermissions', 'You do not have permissions to do that'));
+                return;
+            }
 
             switch (action) {
                 case 'start':

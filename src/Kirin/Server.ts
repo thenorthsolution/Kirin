@@ -6,6 +6,7 @@ import { GuildTextBasedChannel, Message } from 'discord.js';
 import { NewPingResult, OldPingResult, ping } from 'minecraft-protocol';
 import { MessageContent } from './MessageContent';
 
+export type Action = 'start'|'stop';
 export type ServerStatus = 'ONLINE'|'OFFLINE';
 
 export interface PingData {

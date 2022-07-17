@@ -2,9 +2,21 @@ import { createConfig } from '../_createConfig';
 import path from 'path';
 import yml from 'yaml';
 import { ServerOptions } from './Server';
+import { PermissionString } from 'discord.js';
 
 export interface KirinConfig {
+    permissions: {
+        start: {
+            allowedPermissions: PermissionString[];
+            allowedRoles: string[];
+        };
+        stop: {
+            allowedPermissions: PermissionString[];
+            allowedRoles: string[];
+        }
+    };
     process: {
+        controlViaCommands: boolean;
         stopServersOnExit: boolean;
         showConsoleMessages: boolean;
     };
@@ -31,7 +43,18 @@ export class Config {
     public static getConfig(): KirinConfig {
         const configPath = path.join(process.cwd(), 'config/kirin/config.yml');
         const defaultConfig: KirinConfig = {
+            permissions: {
+                start: {
+                    allowedPermissions: [],
+                    allowedRoles: ['000000000000000000']
+                },
+                stop: {
+                    allowedPermissions: ['ADMINISTRATOR'],
+                    allowedRoles: ['000000000000000000']
+                }
+            },
             process: {
+                controlViaCommands: true,
                 showConsoleMessages: true,
                 stopServersOnExit: false
             },
