@@ -4,7 +4,7 @@ Start your servers via Discord using Kirin
 
 ## Installation
 
-Download bot from [Releases Menu](https://github.com/FalloutStudios/Kirin/releases) then extract files anywhere you want. Then install the required dependencies using the following command in your terminal:
+Download bot from [Releases Menu](https://github.com/FalloutStudios/Kirin/releases) then extract files anywhere you want or simply or `git clone https://github.com/FalloutStudios/Kirin.git`. Then install the required dependencies using the following command in your terminal:
 
 ```bash
 npm install
