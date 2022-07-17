@@ -152,7 +152,7 @@ export class Server extends EventEmitter {
             version: response?.version.name ?? 'unknown'
         };
 
-        this.updateMessage();
+        await this.updateMessage();
         this.logger.debug(`Ping status updated!`);
         this.emit('ping', this.lastPingData);
         if (loop) setTimeout(() => this.ping(loop), this.kirin.config.ping.pingIntervalMs);
