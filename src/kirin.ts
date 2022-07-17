@@ -137,7 +137,7 @@ export class KirinMain implements RecipleScript {
                     
                     await interaction.deferReply({ ephemeral: true });
                     if (!server) return interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
-                    if (!server.process || server.status == 'OFFLINE') return interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped')).catch(() => {});
+                    if (server.process || server.status === 'ONLINE') return interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running')).catch(() => {});
 
                     server.start();
                     interaction.editReply(this.getMessage('starting', 'Starting...')).catch(() => {});
@@ -159,7 +159,7 @@ export class KirinMain implements RecipleScript {
                     
                     await interaction.deferReply({ ephemeral: true });
                     if (!server) return interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
-                    if (server.process || server.status === 'ONLINE') return interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running')).catch(() => {});
+                    if (!server.process || server.status == 'OFFLINE') return interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped')).catch(() => {});
 
                     const stop = await server.stop().catch(() => false);
                     interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
