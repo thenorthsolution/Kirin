@@ -1,4 +1,4 @@
-import { RecipleClient, RecipleCommandBuilders, RecipleScript } from 'reciple';
+import { InteractionCommandBuilder, RecipleClient, RecipleCommandBuilders, RecipleScript } from 'reciple';
 import { Logger, replaceAll, escapeRegExp } from 'fallout-utility';
 import { Config, KirinConfig } from './Kirin/Config';
 import { Action, Server } from './Kirin/Server';
@@ -17,6 +17,10 @@ export class KirinMain implements RecipleScript {
         this.client = client;
 
         this.logger.log("Starting Kirin...");
+
+        if (this.config.process.controlViaCommands) {
+            this.commands = this.getCommands();
+        }
 
         this.client.on('interactionCreate', async interaction => {
             if (!interaction.isButton()) return;
@@ -97,6 +101,55 @@ export class KirinMain implements RecipleScript {
         }
 
         return servers;
+    }
+
+    public getCommands(): InteractionCommandBuilder[] {
+        return [
+            new InteractionCommandBuilder()
+                .setName('start')
+                .setDescription(this.getMessage('startDescription', 'Start a server'))
+                .setRequiredMemberPermissions(...this.config.permissions.start.allowedPermissions)
+                .addStringOption(server => server
+                    .setName('server')
+                    .setDescription('Server to start')
+                    .setRequired(true)
+                    .setAutocomplete(true)    
+                )
+                .setExecute(async command => {
+                    const interaction = command.interaction;
+                    const serverQuery = interaction.options.getString('server', true);
+                    const server = this.servers.find(s => s.id == serverQuery || s.options.name && s.options.name.toLowerCase() == serverQuery.toLowerCase());
+                    
+                    await interaction.deferReply({ ephemeral: true });
+                    if (!server) return interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
+                    if (!server.process || server.status == 'OFFLINE') return interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped')).catch(() => {});
+
+                    const stop = await server.stop().catch(() => false);
+                    interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
+                }),
+            new InteractionCommandBuilder()
+                .setName('stop')
+                .setDescription(this.getMessage('stopDescription', 'Stop a server'))
+                .setRequiredMemberPermissions(...this.config.permissions.stop.allowedPermissions)
+                .addStringOption(server => server
+                    .setName('server')
+                    .setDescription('Server to stop')
+                    .setRequired(true)
+                    .setAutocomplete(true)    
+                )
+                .setExecute(async command => {
+                    const interaction = command.interaction;
+                    const serverQuery = interaction.options.getString('server', true);
+                    const server = this.servers.find(s => s.id == serverQuery || s.options.name && s.options.name.toLowerCase() == serverQuery.toLowerCase());
+                    
+                    await interaction.deferReply({ ephemeral: true });
+                    if (!server) return interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
+                    if (server.process || server.status === 'ONLINE') return interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running')).catch(() => {});
+
+                    server.start();
+                    interaction.editReply(this.getMessage('starting', 'Starting...')).catch(() => {});
+                })
+        ];
     }
 
     public getMessage<T extends any>(message: string, defaultMessage?: T, ...placeholders: string[]): T {

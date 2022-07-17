@@ -82,9 +82,12 @@ export class Config {
                 embedVersionLabel: 'Server Version',
                 embedVersionValue: '{0}',
                 unknownAction: 'Unknown interaction',
+                startDescription: 'Start a server',
+                stopDescription: 'Stop a server',
                 alreadyStarted: 'Server is already running',
                 alreadyStopped: 'Server is already stopped',
                 failedToStop: 'Failed to stop server',
+                serverNotFound: 'Server not found',
                 starting: 'Starting...',
                 stopping: 'Stopping...'
             }
