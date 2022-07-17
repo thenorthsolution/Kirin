@@ -96,7 +96,7 @@ export class Server extends EventEmitter {
         this.process = spawn(command, args, {
             cwd: this.root,
             env: process.env,
-            detached: !!this.kirin.config.process.stopServersOnExit,
+            detached: !this.kirin.config.process.stopServersOnExit,
             killSignal: this.stopSignal,
         });
 
