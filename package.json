@@ -14,7 +14,6 @@
     },
     "devDependencies": {
         "@types/node": "^17.0.34",
-        "reciple-module-manager": "^1.1.2",
         "typescript": "^4.7.4"
     }
 }
