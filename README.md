@@ -21,3 +21,8 @@ npm run start
 * Change token and other thing from `reciple.yml`
 * Configure Kirin in `config/kirin/config.yml`
 * Add server in `config/kirin/servers.yml`
+
+## Support 
+
+* GitHub https://github.com/FalloutStudios/Kirin/issues
+* Discord https://discord.gg/2CattJYNpw
