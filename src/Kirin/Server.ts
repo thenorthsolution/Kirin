@@ -172,7 +172,7 @@ export class Server extends EventEmitter {
 
     public async fetch(): Promise<Server> {
         const channel = this.kirin.client.channels.cache.get(this.options.channel_id) ?? await this.kirin.client.channels.fetch(this.options.channel_id).catch(err => this.logger.err(err));
-        if (!channel?.isText()) {
+        if (!channel?.isTextBased()) {
             this.delete();
             throw new TypeError(`Unknown guild channel: ${this.options.channel_id}`);
         }

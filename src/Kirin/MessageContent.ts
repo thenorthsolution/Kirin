@@ -1,4 +1,4 @@
-import { ColorResolvable, MessageActionRow, MessageButton, MessageEditOptions, MessageEmbed } from 'discord.js';
+import { ColorResolvable, ActionRowBuilder, ButtonBuilder, MessageEditOptions, EmbedBuilder, ButtonStyle, MessageActionRowComponentBuilder } from 'discord.js';
 import { Server } from './Server';
 
 export class MessageContent {
@@ -21,10 +21,10 @@ export class MessageContent {
         };
     }
 
-    public makeEmbed(): MessageEmbed {
-        const embed = new MessageEmbed();
+    public makeEmbed(): EmbedBuilder {
+        const embed = new EmbedBuilder();
 
-        embed.setColor(this.server.kirin.getMessage<ColorResolvable>('onlineEmbedColor', this.server.status == 'ONLINE' ? 'BLUE' : 'DARK_BUT_NOT_BLACK'));
+        embed.setColor(this.server.kirin.getMessage<ColorResolvable>('onlineEmbedColor', this.server.status == 'ONLINE' ? 'Blue' : 'DarkButNotBlack'));
         embed.setTitle(this.server.options.name ?? this.server.id);
         embed.setFooter({ text: this.server.id });
         embed.setTimestamp();
@@ -63,21 +63,21 @@ export class MessageContent {
         return embed;
     }
 
-    public makeButtons(): MessageActionRow {
+    public makeButtons(): ActionRowBuilder<MessageActionRowComponentBuilder> {
         let buttons = [
-            new MessageButton()
-                .setStyle("SUCCESS")
+            new ButtonBuilder()
+                .setStyle(ButtonStyle.Success)
                 .setCustomId(`${this.server.id}-start`)
                 .setLabel(this.server.kirin.getMessage('startButtonLabel', 'Start'))
                 .setDisabled(this.server.status == 'ONLINE'),
-            new MessageButton()
-                .setStyle("SECONDARY")
+            new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
                 .setCustomId(`${this.server.id}-stop`)
                 .setLabel(this.server.kirin.getMessage('stopButtonLabel', 'Stop'))
                 .setDisabled(this.server.status == 'OFFLINE')
         ];
 
-        if (this.server.kirin.config.miscellaneous.deleteDisabledButtons) buttons = buttons.filter(b => !b.disabled);
-        return new MessageActionRow().addComponents(...buttons);
+        if (this.server.kirin.config.miscellaneous.deleteDisabledButtons) buttons = buttons.filter(b => !b.data.disabled);
+        return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(...buttons);
     }
 }

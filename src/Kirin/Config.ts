@@ -2,20 +2,20 @@ import { createConfig } from '../_createConfig';
 import path from 'path';
 import yml from 'yaml';
 import { ServerOptions } from './Server';
-import { PermissionString } from 'discord.js';
+import { PermissionsString } from 'discord.js';
 
 export interface KirinConfig {
     permissions: {
         start: {
-            allowedPermissions: PermissionString[];
+            allowedPermissions: PermissionsString[];
             allowedRoles: string[];
         };
         stop: {
-            allowedPermissions: PermissionString[];
+            allowedPermissions: PermissionsString[];
             allowedRoles: string[];
         },
         init: {
-            allowedPermissions: PermissionString[];
+            allowedPermissions: PermissionsString[];
         }
     };
     process: {
@@ -53,11 +53,11 @@ export class Config {
                     allowedRoles: ['000000000000000000']
                 },
                 stop: {
-                    allowedPermissions: ['ADMINISTRATOR'],
+                    allowedPermissions: ['Administrator'],
                     allowedRoles: ['000000000000000000']
                 },
                 init: {
-                    allowedPermissions: ['MANAGE_MESSAGES']
+                    allowedPermissions: ['ManageMessages']
                 }
             },
             process: {
