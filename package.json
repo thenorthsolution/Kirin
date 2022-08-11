@@ -2,7 +2,7 @@
     "name": "kirin",
     "version": "2.1.0",
     "scripts": {
-        "clean": "node clean.js",
+        "clean": "npx rimraf modules",
         "build": "npm run clean && npx tsc",
         "start": "npm run build && npx reciple -y",
         "test": "npm run build && npx reciple -D -y"
@@ -16,6 +16,7 @@
     },
     "devDependencies": {
         "@types/node": "^17.0.45",
+        "rimraf": "^3.0.2",
         "typescript": "^4.7.4"
     }
 }

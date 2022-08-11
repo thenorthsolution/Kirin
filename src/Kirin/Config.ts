@@ -80,8 +80,8 @@ export class Config {
             messages: {
                 startButtonLabel: 'Start',
                 stopButtonLabel: 'Stop',
-                onlineEmbedColor: 'BLUE',
-                offlineEmbedColor: 'DARK_BUT_NOT_BLACK',
+                onlineEmbedColor: 'Blue',
+                offlineEmbedColor: 'DarkButNotBlack',
                 embedStatusLabel: 'Status',
                 embedStatusOnline: '**Online**',
                 embedStatusOffline: '**Offline**',
