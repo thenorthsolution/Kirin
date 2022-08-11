@@ -5,7 +5,7 @@ import { Action, Server } from './Kirin/Server';
 import { AutocompleteInteraction, GuildMember, EmbedBuilder } from 'discord.js';
 
 export class KirinMain implements RecipleScript {
-    public versions: string = '2.0.x';
+    public versions: string = '^5.1.0';
     public config: KirinConfig = Config.getConfig();
     public client!: RecipleClient<boolean>;
     public logger!: Logger;
