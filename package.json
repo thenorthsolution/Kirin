@@ -4,7 +4,7 @@
     "scripts": {
         "clean": "npx rimraf modules",
         "build": "npm run clean && npx tsc",
-        "start": "npm run build && npx reciple -y",
+        "start": "npx reciple -y",
         "test": "npm run build && npx reciple -D -y"
     },
     "dependencies": {
