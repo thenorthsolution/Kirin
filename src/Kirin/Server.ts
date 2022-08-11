@@ -85,6 +85,11 @@ export class Server extends EventEmitter {
         this.port = options.port;
         this.kirin = options.kirin;
         this.logger = this.kirin.logger.cloneLogger({ loggerName: this.options.name ?? this.id });
+
+        if (options.channel_id == '000000000000000000' || options.message_id == '000000000000000000') {
+            this.delete();
+            throw new TypeError(`Invalid channel or message id`);
+        }
     }
 
     public start(): void {
