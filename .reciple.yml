@@ -1,5 +1,5 @@
 name: kirin
-version: 2.1.1
+version: 2.1.2
 description: Minecraft server starter in Discord
 license: GPL-3.0
 author: FalloutStudios
@@ -9,3 +9,5 @@ files:
   - 'kirin.js'
 supportedRecipleVersions:
   - ^5.0.0
+dependencies:
+  minecraft-protocol: ^1.36.1
