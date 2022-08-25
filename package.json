@@ -1,20 +1,23 @@
 {
     "name": "kirin",
-    "version": "2.1.0",
+    "private": true,
+    "license": "GPL-3.0",
     "scripts": {
         "clean": "npx rimraf modules",
         "build": "npm run clean && npx tsc",
+        "pack": "npm run build && cp .reciple.yml ./modules && npx rmm pack --module-dir ./modules --remove-old-file true",
         "start": "npx reciple -y",
         "test": "npm run build && npx reciple -D -y"
     },
     "dependencies": {
-        "discord.js": "^14.2.0",
+        "discord.js": "^14.3.0",
         "fallout-utility": "^1.4.6",
-        "minecraft-protocol": "^1.35.1",
-        "reciple": "^5.1.0",
+        "minecraft-protocol": "^1.36.1",
+        "reciple": "^5.3.0",
         "yaml": "^2.1.1"
     },
     "devDependencies": {
+        "@falloutstudios/rmm": "^3.3.0",
         "@types/node": "^17.0.45",
         "rimraf": "^3.0.2",
         "typescript": "^4.7.4"

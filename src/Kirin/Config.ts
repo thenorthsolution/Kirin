@@ -1,4 +1,4 @@
-import { createConfig } from '../_createConfig';
+import { createConfig } from '../_kirin.createConfig';
 import path from 'path';
 import yml from 'yaml';
 import { ServerOptions } from './Server';
