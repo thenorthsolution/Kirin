@@ -183,7 +183,7 @@ export class Server extends EventEmitter {
         }
 
         this.channel = channel as GuildTextBasedChannel;
-        
+
         const message = this.channel.messages.cache.get(this.options.message_id) ?? await this.channel.messages.fetch(this.options.message_id).catch(err => this.logger.err(err));
         if (!message) {
             this.delete();
