@@ -18,8 +18,12 @@ export class KirinMain implements RecipleScript {
 
         this.logger.log("Starting Kirin...");
 
-        if (this.config.process.controlViaCommands) {
-            this.commands = this.getCommands();
+        try {
+            if (this.config.process.controlViaCommands) {
+                this.commands = this.getCommands();
+            }
+        } catch (err) {
+            this.logger.error(err);
         }
 
         this.client.on('interactionCreate', async interaction => {
@@ -80,7 +84,7 @@ export class KirinMain implements RecipleScript {
         this.logger.log(`Loading servers...`);
         this.servers = await this.fetchServers();
         this.logger.log(`Loaded ${this.servers.length} server(s)`);
-        
+
         this.logger.debug(`Pinging all servers...`);
         for (const server of this.servers) {
             server.ping(true);
@@ -97,7 +101,7 @@ export class KirinMain implements RecipleScript {
         for (const serverOption of serverLists) {
             this.logger.debug(`Creating new server: ${serverOption.id}`);
             const server = new Server({ ...serverOption, kirin: this });
-            
+
             await server.fetch().then(() => servers.push(server)).catch(err => server.logger.err(err));
         }
 
@@ -123,12 +127,12 @@ export class KirinMain implements RecipleScript {
             new SlashCommandBuilder()
                 .setName('start')
                 .setDescription(this.getMessage('startDescription', 'Start a server'))
-                .setRequiredMemberPermissions(...this.config.permissions.start.allowedPermissions)
+                .setRequiredMemberPermissions(this.config.permissions.start.allowedPermissions)
                 .addStringOption(server => server
                     .setName('server')
                     .setDescription('Server to start')
                     .setRequired(true)
-                    .setAutocomplete(true)    
+                    .setAutocomplete(true)
                 )
                 .setExecute(async command => {
                     const interaction = command.interaction;
@@ -151,7 +155,7 @@ export class KirinMain implements RecipleScript {
             new SlashCommandBuilder()
                 .setName('stop')
                 .setDescription(this.getMessage('stopDescription', 'Stop a server'))
-                .setRequiredMemberPermissions(...this.config.permissions.stop.allowedPermissions)
+                .setRequiredMemberPermissions(this.config.permissions.stop.allowedPermissions)
                 .addStringOption(server => server
                     .setName('server')
                     .setDescription('Server to stop')
@@ -176,7 +180,7 @@ export class KirinMain implements RecipleScript {
                     const stop = await server.stop().catch(() => false);
                     interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
                 }),
-            ...(this.config.process.initServerMessageCommant ?
+            ...(this.config.process.initServerMessageCommand ?
                     [
                         new MessageCommandBuilder()
                         .setName('init')

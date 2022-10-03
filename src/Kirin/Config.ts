@@ -19,7 +19,7 @@ export interface KirinConfig {
         }
     };
     process: {
-        initServerMessageCommant: boolean;
+        initServerMessageCommand: boolean;
         controlViaCommands: boolean;
         stopServersOnExit: boolean;
         showConsoleMessages: boolean;
@@ -61,7 +61,7 @@ export class Config {
                 }
             },
             process: {
-                initServerMessageCommant: true,
+                initServerMessageCommand: true,
                 controlViaCommands: true,
                 showConsoleMessages: true,
                 stopServersOnExit: false
