@@ -11,7 +11,7 @@ export class KirinMain implements RecipleScript {
     public logger!: Logger;
     public servers: Server[] = [];
     public commands?: AnyCommandBuilder[] = [];
-    
+
     public async onStart(client: RecipleClient<boolean>): Promise<boolean> {
         this.logger = client.logger.cloneLogger({ loggerName: 'Kirin' });
         this.client = client;
@@ -31,7 +31,7 @@ export class KirinMain implements RecipleScript {
             const id = splitId.join('-');
 
             if (!id || !action) return;
-            
+
             const permissions = this.config.permissions[action as Action];
             const server = this.servers.find(s => s.id == id);
             if (!server) return;
@@ -63,7 +63,7 @@ export class KirinMain implements RecipleScript {
                     if (!server.process || server.status == 'OFFLINE') {
                         interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped')).catch(() => {});
                         break;
-                    }    
+                    }
 
                     const stop = await server.stop().catch(() => false);
                     interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
