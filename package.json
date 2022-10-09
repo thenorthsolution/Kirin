@@ -5,7 +5,7 @@
     "scripts": {
         "clean": "npx rimraf modules",
         "build": "npm run clean && npx tsc",
-        "pack": "npm run build && cp .reciple.yml ./modules && npx rmm pack --module-dir ./modules --remove-old-file true",
+        "pack": "npm run build && cp ./src/.reciple.yml ./modules && npx rmm pack --module-dir ./modules --remove-old-file true",
         "start": "npx reciple -y",
         "test": "npm run build && npx reciple -D -y"
     },
