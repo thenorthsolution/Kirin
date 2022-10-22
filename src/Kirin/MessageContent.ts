@@ -13,15 +13,15 @@ export class MessageContent {
         this.server = server;
     }
 
-    public getData(): MessageEditOptions {
+    public getData(serverstatus?: boolean, buttons?: boolean): MessageEditOptions {
         return {
             ...this.data,
-            embeds: [this.makeEmbed()],
-            components: this.server.kirin.config.miscellaneous.disableAllButtons ? [] : [this.makeButtons()]
+            embeds: [this.makeEmbed(serverstatus)],
+            components: (buttons === false || this.server.kirin.config.miscellaneous.disableAllButtons) ? [] : [this.makeButtons()]
         };
     }
 
-    public makeEmbed(): EmbedBuilder {
+    public makeEmbed(serverstatus?: boolean): EmbedBuilder {
         const embed = new EmbedBuilder();
 
         embed.setColor(this.server.kirin.getMessage<ColorResolvable>('onlineEmbedColor', this.server.status == 'ONLINE' ? 'Blue' : 'DarkButNotBlack'));
@@ -30,7 +30,7 @@ export class MessageContent {
         embed.setTimestamp();
 
         if (this.server.options.description) embed.setDescription(this.server.options.description);
-        if (this.server.kirin.config.ping.displayServerStatus) {
+        if (serverstatus ?? this.server.kirin.config.ping.displayServerStatus) {
             if (this.server.status == 'ONLINE') {
                 embed.addFields([
                     {

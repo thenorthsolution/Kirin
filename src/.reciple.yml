@@ -8,6 +8,7 @@ files:
   - '_kirin.createConfig.js'
   - 'kirin.js'
 supportedRecipleVersions:
-  - ^5.0.0
+  - ^5.1.0
+  - ^6.0.0
 dependencies:
   minecraft-protocol: ^1.36.1

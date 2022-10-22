@@ -1,6 +1,7 @@
 {
     "name": "kirin",
     "private": true,
+    "type": "commonjs",
     "license": "GPL-3.0",
     "scripts": {
         "clean": "npx rimraf modules",

@@ -66,11 +66,13 @@ export class Server extends EventEmitter {
     public port: number;
     public channel?: GuildTextBasedChannel;
     public message?: Message;
+    public messageContentBuilder: MessageContent = new MessageContent(this);
     public kirin: KirinMain;
     public status: ServerStatus = 'OFFLINE';
     public logger: Logger;
     public process?: ChildProcess;
     public lastPingData?: PingData;
+    public pingInterval?: NodeJS.Timer;
     public deleted: boolean = false;
 
     constructor (options: ServerOptions) {
@@ -160,14 +162,14 @@ export class Server extends EventEmitter {
         await this.updateMessage();
         this.logger.debug(`Ping status updated!`);
         this.emit('ping', this.lastPingData);
-        if (loop) setTimeout(() => this.ping(loop), this.kirin.config.ping.pingIntervalMs);
+        if (loop && !this.pingInterval) this.pingInterval = setInterval(() => this.ping(loop), this.kirin.config.ping.pingIntervalMs);
         return response ? response : undefined;
     }
 
     public async updateMessage(): Promise<void> {
         if (!this.message) throw new Error(`Message is not defined`);
 
-        await this.message.edit(new MessageContent(this).getData())
+        await this.message.edit(this.messageContentBuilder.getData())
         .then(message => {
             this.logger.debug(`Updated ${this.id} message: ${message.id}`)
             this.emit('messageUpdate', message);

@@ -5,12 +5,12 @@ import { Action, Server } from './Kirin/Server';
 import { AutocompleteInteraction, GuildMember, EmbedBuilder } from 'discord.js';
 
 export class KirinMain implements RecipleScript {
-    public versions: string = '^5.1.0';
+    public versions: string[] = ['^5.1.0', '^6'];
     public config: KirinConfig = Config.getConfig();
     public client!: RecipleClient<boolean>;
     public logger!: Logger;
     public servers: Server[] = [];
-    public commands?: AnyCommandBuilder[] = [];
+    public commands: AnyCommandBuilder[] = [];
 
     public async onStart(client: RecipleClient<boolean>): Promise<boolean> {
         this.logger = client.logger.cloneLogger({ loggerName: 'Kirin' });
@@ -77,6 +77,25 @@ export class KirinMain implements RecipleScript {
             }
         });
 
+        if (this.config.process.initServerMessageCommand) {
+            this.commands?.push(
+                new MessageCommandBuilder()
+                        .setName('init')
+                        .setDescription('Make new message for new server embed')
+                        .setRequiredMemberPermissions(...this.config.permissions.init.allowedPermissions)
+                        .setExecute(async command => {
+                            const message = command.message;
+                            const embed = new EmbedBuilder()
+                                .setAuthor({ name: 'Messsage Info' })
+                                .setColor(this.getMessage('onlineEmbedColor', 'Blue'))
+                                .addFields({ name: 'channel_id', value: `\`\`\`\n${message.channel.id}\n\`\`\`` });
+
+                            const reply = await message.channel.send({ embeds: [embed] });
+                            reply.edit({ embeds: [embed.addFields({ name: 'message_id', value: `\`\`\`\n${reply.id}\n\`\`\`` })] });
+                        })
+            );
+        }
+
         return true;
     }
 
@@ -86,12 +105,28 @@ export class KirinMain implements RecipleScript {
         this.logger.log(`Loaded ${this.servers.length} server(s)`);
 
         this.logger.debug(`Pinging all servers...`);
+
         for (const server of this.servers) {
             server.ping(true);
             this.logger.debug(`Pinged ${server.id}`);
         }
 
         this.logger.log("Loaded Kirin...");
+    }
+
+    public async onUnload(reason: unknown, client: RecipleClient<true>): Promise<void> {
+        this.logger.warn(`Unloading kirin...`);
+
+        for (const server of this.servers) {
+            this.logger.log(`Unloading ${server.options.name ?? server.id}...`);
+            clearInterval(server.pingInterval);
+
+            await server.message?.edit(server.messageContentBuilder.getData(false, false)).catch(err => {
+                this.logger.err(`Unable to edit '${server.options.name}' message: `, err);
+            });
+
+            this.logger.log(`Unloaded ${server.options.name ?? server.id}...`);
+        }
     }
 
     public async fetchServers(): Promise<Server[]> {
@@ -180,24 +215,6 @@ export class KirinMain implements RecipleScript {
                     const stop = await server.stop().catch(() => false);
                     interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
                 }),
-            ...(this.config.process.initServerMessageCommand ?
-                    [
-                        new MessageCommandBuilder()
-                        .setName('init')
-                        .setDescription('Make new message for new server embed')
-                        .setRequiredMemberPermissions(...this.config.permissions.init.allowedPermissions)
-                        .setExecute(async command => {
-                            const message = command.message;
-                            const embed = new EmbedBuilder()
-                                .setAuthor({ name: 'Messsage Info' })
-                                .setColor(this.getMessage('onlineEmbedColor', 'Blue'))
-                                .addFields({ name: 'channel_id', value: `\`\`\`\n${message.channel.id}\n\`\`\`` });
-
-                            const reply = await message.channel.send({ embeds: [embed] });
-                            reply.edit({ embeds: [embed.addFields({ name: 'message_id', value: `\`\`\`\n${reply.id}\n\`\`\`` })] });
-                        })
-                    ]
-                : [])
         ];
     }
 
