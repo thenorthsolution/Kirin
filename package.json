@@ -14,7 +14,7 @@
         "discord.js": "^14.6.0",
         "fallout-utility": "^1.5.2",
         "minecraft-protocol": "^1.36.1",
-        "reciple": "^6.0.0-dev.16"
+        "reciple": "^6.0.0-dev.23"
     },
     "devDependencies": {
         "@falloutstudios/rmm": "^3.3.4",
