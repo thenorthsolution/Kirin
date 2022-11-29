@@ -1,8 +1,8 @@
-import { createConfig } from '../_kirin.createConfig';
+import { PermissionsString } from 'discord.js';
+import { createConfig } from './createConfig';
+import { ServerOptions } from './Server';
 import path from 'path';
 import yml from 'yaml';
-import { ServerOptions } from './Server';
-import { PermissionsString } from 'discord.js';
 
 export interface KirinConfig {
     permissions: {

@@ -87,17 +87,17 @@ export class Server extends EventEmitter {
         this.logger = this.kirin.logger.cloneLogger({ loggerName: this.options.name ?? this.id });
 
         if (options.channel_id == '000000000000000000' || options.message_id == '000000000000000000') {
-            this.delete();
+            this.deleted = true;
             throw new TypeError(`Invalid channel or message id`);
         }
     }
 
-    public start(): void {
+    public async start(): Promise<void> {
         if (this.process) throw new Error('Process is already running');
         this.logger.debug(`Starting ${this.id}`);
 
         const [command, ...args] = splitString(this.script, true);
-        
+
         this.process = spawn(command, args, {
             cwd: this.root,
             env: process.env,
@@ -110,12 +110,12 @@ export class Server extends EventEmitter {
         this.process.stdin?.on('data', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.log(message.toString().trim()) : this.logger.debug(message.toString().trim()));
         this.process.on('error', (message) => this.kirin.config.process.showConsoleMessages ? this.logger.error(message) : this.logger.debug(message));
 
-        this.process.on('close', (code, signal) => {
+        this.process.once('close', (code, signal) => {
             this.logger.log(`${this.id} closed: ${code}; signal: ${signal}`);
             this.process = undefined;
         });
 
-        this.process.on('exit', (code, signal) => {
+        this.process.once('exit', (code, signal) => {
             this.logger.log(`${this.id} exited: ${code}; signal: ${signal}`);
             this.process = undefined;
         });
@@ -178,7 +178,7 @@ export class Server extends EventEmitter {
     public async fetch(): Promise<Server> {
         const channel = this.kirin.client.channels.cache.get(this.options.channel_id) ?? await this.kirin.client.channels.fetch(this.options.channel_id).catch(err => this.logger.err(err));
         if (!channel?.isTextBased()) {
-            this.delete();
+            await this.delete();
             throw new TypeError(`Unknown guild channel: ${this.options.channel_id}`);
         }
 
@@ -186,12 +186,12 @@ export class Server extends EventEmitter {
 
         const message = this.channel.messages.cache.get(this.options.message_id) ?? await this.channel.messages.fetch(this.options.message_id).catch(err => this.logger.err(err));
         if (!message) {
-            this.delete();
+            await this.delete();
             throw new TypeError(`Unknown message: ${this.options.message_id}`);
         }
 
         if (message.author.id !== this.kirin.client.user?.id || !message.editable) {
-            this.delete();
+            await this.delete();
             throw new Error(`${this.kirin.client.user?.id} is not the author of message: ${message.id}`);
         }
 
@@ -199,7 +199,8 @@ export class Server extends EventEmitter {
         return this;
     }
 
-    public delete(): void {
+    public async delete(): Promise<void> {
+        await this.stop();
         this.deleted = true;
     }
 }

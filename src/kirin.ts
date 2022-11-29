@@ -1,15 +1,15 @@
-import { SlashCommandBuilder, MessageCommandBuilder, RecipleClient, AnyCommandBuilder, RecipleScript } from 'reciple';
+import { SlashCommandBuilder, MessageCommandBuilder, RecipleClient, AnyCommandBuilder, RecipleScript, isSupportedVersion } from 'reciple';
+import { AutocompleteInteraction, GuildMember, EmbedBuilder, Collection } from 'discord.js';
 import { Logger, replaceAll, escapeRegExp } from 'fallout-utility';
 import { Config, KirinConfig } from './Kirin/Config';
 import { Action, Server } from './Kirin/Server';
-import { AutocompleteInteraction, GuildMember, EmbedBuilder } from 'discord.js';
 
 export class KirinMain implements RecipleScript {
-    public versions: string = '^5.1.0';
+    public versions: string[] = ['^5.1.0', '^6'];
     public config: KirinConfig = Config.getConfig();
     public client!: RecipleClient<boolean>;
     public logger!: Logger;
-    public servers: Server[] = [];
+    public servers: Collection<string, Server> = new Collection();
     public commands?: AnyCommandBuilder[] = [];
 
     public async onStart(client: RecipleClient<boolean>): Promise<boolean> {
@@ -17,6 +17,8 @@ export class KirinMain implements RecipleScript {
         this.client = client;
 
         this.logger.log("Starting Kirin...");
+
+        if (!isSupportedVersion('^6', this.client.version)) this.logger.warn(`You are using older version of Reciple, using v6 is recommended.`);
 
         try {
             if (this.config.process.controlViaCommands) {
@@ -48,32 +50,32 @@ export class KirinMain implements RecipleScript {
             const hasRole = (interaction.member as GuildMember).roles.cache.find(r => permissions.allowedRoles.some(pr => pr == r.id || pr == r.name));
 
             if (!hasRole && !hasPermissions) {
-                interaction.editReply(this.getMessage('noPermissions', 'You do not have permissions to do that'));
+                await interaction.editReply(this.getMessage('noPermissions', 'You do not have permissions to do that'));
                 return;
             }
 
             switch (action) {
                 case 'start':
                     if (server.process || server.status == 'ONLINE') {
-                        interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running')).catch(() => {});
+                        await interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running')).catch(() => {});
                         break;
                     }
 
-                    server.start();
-                    interaction.editReply(this.getMessage('starting', 'Starting...')).catch(() => {});
+                    await server.start();
+                    await interaction.editReply(this.getMessage('starting', 'Starting...')).catch(() => {});
 
                     break;
                 case 'stop':
                     if (!server.process || server.status == 'OFFLINE') {
-                        interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped')).catch(() => {});
+                        await interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped')).catch(() => {});
                         break;
                     }
 
                     const stop = await server.stop().catch(() => false);
-                    interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
+                    await interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
                     break;
                 default:
-                    interaction.editReply(this.getMessage('unknownAction', 'Unknown interaction')).catch(() => {});
+                    await interaction.editReply(this.getMessage('unknownAction', 'Unknown interaction')).catch(() => {});
             }
         });
 
@@ -82,11 +84,12 @@ export class KirinMain implements RecipleScript {
 
     public async onLoad(): Promise<void> {
         this.logger.log(`Loading servers...`);
-        this.servers = await this.fetchServers();
-        this.logger.log(`Loaded ${this.servers.length} server(s)`);
+
+        await this.fetchServers();
+        this.logger.log(`Loaded ${this.servers.size} server(s)`);
 
         this.logger.debug(`Pinging all servers...`);
-        for (const server of this.servers) {
+        for (const server of this.servers.toJSON()) {
             server.ping(true);
             this.logger.debug(`Pinged ${server.id}`);
         }
@@ -94,27 +97,27 @@ export class KirinMain implements RecipleScript {
         this.logger.log("Loaded Kirin...");
     }
 
-    public async fetchServers(): Promise<Server[]> {
-        const servers: Server[] = [];
+    public async fetchServers(): Promise<Collection<string, Server>> {
         const serverLists = Config.getServers().servers;
 
         for (const serverOption of serverLists) {
             this.logger.debug(`Creating new server: ${serverOption.id}`);
             const server = new Server({ ...serverOption, kirin: this });
 
-            await server.fetch().then(() => servers.push(server)).catch(err => server.logger.err(err));
+            await server.fetch().catch(err => server.logger.err(err));
+            this.servers.set(server.id, server)
         }
 
-        return servers;
+        return this.servers;
     }
 
     public async autoComplete(interaction: AutocompleteInteraction): Promise<void> {
-        if (!['start','stop'].some(n => n == interaction.commandName)) return;
+        if (!['start','stop'].includes(interaction.commandName)) return;
 
         const query = interaction.options.getFocused();
         const servers = this.servers.filter(s => s.id.includes(query) || s.options.name && s.options.name.includes(query));
 
-        interaction.respond(
+        await interaction.respond(
             servers.map(server => ({
                 name: server.options.name ?? server.id,
                 value: server.id
@@ -138,19 +141,19 @@ export class KirinMain implements RecipleScript {
                     const interaction = command.interaction;
                     const serverQuery = interaction.options.getString('server', true);
                     const server = this.servers.find(s => s.id == serverQuery || s.options.name && s.options.name.toLowerCase() == serverQuery.toLowerCase());
-                    
+
                     await interaction.deferReply({ ephemeral: true });
                     if (!server) {
-                        interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
+                        await interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
                         return;
                     }
                     if (server.process || server.status === 'ONLINE') {
-                        interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running'));
+                        await interaction.editReply(this.getMessage('alreadyStarted', 'Server is already running'));
                         return;
                     }
 
-                    server.start();
-                    interaction.editReply(this.getMessage('starting', 'Starting...'));
+                    await server.start();
+                    await interaction.editReply(this.getMessage('starting', 'Starting...'));
                 }),
             new SlashCommandBuilder()
                 .setName('stop')
@@ -166,19 +169,19 @@ export class KirinMain implements RecipleScript {
                     const interaction = command.interaction;
                     const serverQuery = interaction.options.getString('server', true);
                     const server = this.servers.find(s => s.id == serverQuery || s.options.name && s.options.name.toLowerCase() == serverQuery.toLowerCase());
-                    
+
                     await interaction.deferReply({ ephemeral: true });
                     if (!server) {
-                        interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
+                        await interaction.editReply(this.getMessage('serverNotFound', 'Server not found'));
                         return;
                     }
                     if (!server.process || server.status == 'OFFLINE') {
-                        interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped'));
+                        await interaction.editReply(this.getMessage('alreadyStopped', 'Server is already stopped'));
                         return;
                     }
 
                     const stop = await server.stop().catch(() => false);
-                    interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
+                    await interaction.editReply(this.getMessage(stop ? 'stopped' : 'failedToStop', stop ? 'Stopping...' : 'Failed to stop server'));
                 }),
             ...(this.config.process.initServerMessageCommand ?
                     [
