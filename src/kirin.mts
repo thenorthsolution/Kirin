@@ -10,7 +10,7 @@ export class KirinModule implements RecipleModuleScript {
     public client!: RecipleClient;
     public logger?: Logger;
 
-    readonly versions: string[] = ['^7.0.9'];
+    readonly versions: string[] = ['^7.0.4'];
     readonly servers: Collection<string, Server> = new Collection();
 
     public config: KirinConfig = createConfig();
@@ -34,3 +34,5 @@ export class KirinModule implements RecipleModuleScript {
         this.logger?.log(`Unloaded Kirin!`);
     }
 }
+
+export default new KirinModule();

@@ -7,6 +7,6 @@ files:
   - 'kirin.mjs'
   - 'Kirin'
 supportedRecipleVersions:
-  - ^7.0.9
+  - ^7.0.4
 dependencies:
   minecraft-protocol: ^1.40.3
