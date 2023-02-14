@@ -4,7 +4,7 @@
     ],
     "compilerOptions": {
         "target": "ESNext",
-        "module": "commonjs",
+        "module": "NodeNext",
         "rootDir": "./src",
         "outDir": "./modules",
         "esModuleInterop": true,

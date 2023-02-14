@@ -4,11 +4,8 @@ description: Minecraft server starter in Discord
 license: GPL-3.0
 author: FalloutStudios
 files:
-  - 'Kirin'
-  - '_kirin.createConfig.js'
-  - 'kirin.js'
+  - 'kirin.mjs'
 supportedRecipleVersions:
-  - ^5.1.0
-  - ^6.0.0
+  - ^7.0.9
 dependencies:
-  minecraft-protocol: ^1.36.1
+  minecraft-protocol: ^1.40.3
