@@ -5,6 +5,7 @@ license: GPL-3.0
 author: FalloutStudios
 files:
   - 'kirin.mjs'
+  - 'Kirin'
 supportedRecipleVersions:
   - ^7.0.9
 dependencies:
