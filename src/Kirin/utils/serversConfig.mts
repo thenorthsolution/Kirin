@@ -8,6 +8,10 @@ export type DoNothing<T> = T;
 export interface BaseServerConfig {
     name: string;
     description?: string|null;
+    connection?: {
+        host?: string;
+        port?: number;
+    };
     server: {
         cwd: string;
         serverExecutable: string;
@@ -15,6 +19,8 @@ export interface BaseServerConfig {
     };
     permissions?: Partial<KirinConfig['defaults']['permissions']>|null;
     killSignal?: KirinConfig['defaults']['killSignal']|null;
+    debug?: boolean|null;
+    showStatus?: boolean;
     [key: string]: any;
 }
 
@@ -22,6 +28,10 @@ export const defaultServerConfig = {
     name: 'Server Name',
     description: 'My amazing server',
     hideDisabledButtons: true,
+    connection: {
+        host: 'localhost',
+        port: 25565
+    },
     message: {
         channelId: '',
         messageId: ''
@@ -32,7 +42,9 @@ export const defaultServerConfig = {
         args: []
     },
     permissions: defaultKirinConfig.defaults.permissions,
-    killSignal: defaultKirinConfig.defaults.killSignal
+    killSignal: defaultKirinConfig.defaults.killSignal,
+    showStatusDetails: true,
+    debug: false
 } satisfies BaseServerConfig;
 
 export type ServerConfig = typeof defaultServerConfig & BaseServerConfig;

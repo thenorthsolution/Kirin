@@ -1,5 +1,5 @@
 import { RecipleClient, RecipleModuleScriptUnloadData } from '@reciple/client';
-import { Collection } from 'discord.js';
+import { AutocompleteInteraction, Collection } from 'discord.js';
 import { Logger } from 'fallout-utility';
 import { RecipleModule, RecipleModuleScript } from 'reciple';
 import { Server } from './Kirin/classes/Server.mjs';
@@ -11,18 +11,16 @@ export class KirinModule implements RecipleModuleScript {
     public logger?: Logger;
 
     readonly versions: string[] = ['^7.0.4'];
-    readonly servers: Collection<string, Server> = new Collection();
 
     public config: KirinConfig = createConfig();
     public serversConfig: ServerConfig[] = createServersConfig();
+    public servers: Collection<string, Server> = new Collection();
 
     public async onStart(client: RecipleClient<false>, module: RecipleModule): Promise<boolean> {
         this.client = client;
         this.logger = client.logger?.clone({ name: 'Kirin' });
 
         this.logger?.log(`Starting Kirin...`);
-
-
 
         return true;
     }
@@ -31,7 +29,22 @@ export class KirinModule implements RecipleModuleScript {
 
     public async onUnload(unloadData: RecipleModuleScriptUnloadData): Promise<void> {
         this.logger?.log(`Stopping attached servers...`);
+
+        this.servers = await Server.fetchServers(this);
+
         this.logger?.log(`Unloaded Kirin!`);
+    }
+
+    public async handleAutoComplete(interaction: AutocompleteInteraction): Promise<void> {}
+
+    public async resolveFromCachedManager<V>(id: string, manager: { cache: Collection<string, V>; fetch(key: string): Promise<V|null> }): Promise<V> {
+        const data = manager.cache.get(id) ?? await manager.fetch(id);
+        if (data === null) throw new Error(`Couldn't fetch (${id}) from manager`);
+        return data;
+    }
+
+    public getMessage<T = string>(key: keyof KirinConfig['messages']): T {
+        return this.config.messages[key] as T;
     }
 }
 

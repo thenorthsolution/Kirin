@@ -14,6 +14,7 @@ export interface BaseKirinConfig {
             },
             stop: BaseKirinConfig['defaults']['permissions']['start'];
         };
+        debug: boolean;
     };
     [key: string]: any;
 };
@@ -31,12 +32,26 @@ export const defaultKirinConfig = {
                 allowedRoles: []
             }
         },
-        hideDisabledButtons: true
+        hideDisabledButtons: true,
+        debug: true
     },
     ping: {
         pingIntervalMs: 10000,
-        pingTimeoutMs: 10000,
-        debug: false
+        pingTimeoutMs: 10000
+    },
+    commands: {
+        startCommand: {
+            enabled: true,
+            allowInDm: false
+        },
+        stopCommand: {
+            enabled: true,
+            allowInDm: false
+        },
+    },
+    messages: {
+        onlineEmbedColor: '',
+        offlineEmbedColor: ''
     }
 } satisfies BaseKirinConfig;
 
