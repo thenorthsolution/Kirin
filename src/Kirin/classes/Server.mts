@@ -5,11 +5,13 @@ import { randomUUID } from 'crypto';
 import { ServerConfig } from '../utils/serversConfig.mjs';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Logger, LoggerLevel, path } from 'fallout-utility';
-import { NewPingResult, ping } from 'minecraft-protocol';
+import minecraftProtocol, { NewPingResult } from 'minecraft-protocol';
 import { setTimeout } from 'timers/promises';
 import { setTimeout as setTimeoutSync } from 'timers';
 import { EventEmitter } from 'events';
 import { MessageContent } from './MessageContent.mjs';
+
+const { ping } = minecraftProtocol;
 
 export interface ServerOptions extends ServerConfig {
     kirin: KirinModule;
@@ -61,7 +63,7 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
     constructor(readonly options: ServerOptions) {
         super();
 
-        this.id = randomUUID();
+        this.id = randomUUID().split('-')[0];
         this.kirin = options.kirin;
         this.messageContent = new MessageContent(this);
 
@@ -84,11 +86,13 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
         this._channel = channel;
         this._message = message;
 
+        await this.updateMessageContent();
+
         return this as Server<true>;
     }
 
     public async start(): Promise<this> {
-        if (this.process) throw new Error(`Process is already started`);
+        if (!this.isStopped()) throw new Error(`Process is already started`);
 
         this.logger?.warn(`Starting ${this.name}:\n`, `  cwd: ${this.cwd}\n`, `  cmd: ${this.startCommand}`);
 
@@ -119,10 +123,12 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
     }
 
     public async stop(): Promise<boolean> {
-        if (!this.process || this.process.killed || !this.process.connected) return true;
+        if (this.isStopped()) return true;
 
-        if (this.process.kill(this.killSignal)) {
-            if (!this.process || this.process.killed) return true;
+        this.logger?.warn(`Stopping server ${this.name}`);
+
+        if (this.process?.kill(this.killSignal)) {
+            if (this.isStopped()) return true;
 
             return new Promise((res, rej) => {
                 const timeout = setTimeoutSync(() => res(false), 1000 * 20);
@@ -131,9 +137,15 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
                 this.process?.once('close', () => { res(true); clearTimeout(timeout); });
                 this.process?.once('exit', () => { res(true); clearTimeout(timeout); });
             });
+        } else {
+            return false;
         }
+    }
 
-        return false;
+    public async send(message: string): Promise<void> {
+        if (this.isStopped()) return;
+
+        return new Promise((res) => this.process?.send(message, () => res()));
     }
 
     public async ping(loop: boolean = false): Promise<ServerPingData|null> {
@@ -145,7 +157,12 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
         this.emit('ping', data);
         this.logger?.debug(`Pinged ${this.ip}! Current server status: ${data.status}`);
 
-        if (this.lastPingData?.status !== data.status) this.emit('statusUpdate', this.lastPingData, data);
+        if (this.lastPingData?.status !== data.status) {
+            this.emit('statusUpdate', this.lastPingData, data);
+
+            this.lastPingData = data;
+            await this.updateMessageContent().catch(() => {});
+        }
 
         this.lastPingData = data;
 
@@ -154,7 +171,6 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
                 this._stopPingInterval = false;
                 this.emit('pingIntervalStop');
 
-                await this.updateMessageContent().catch(() => {});
                 return data;
             }
 
@@ -175,6 +191,10 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
 
     public isReady(): this is Server<true> {
         return !!this._channel && !!this._message;
+    }
+
+    public isStopped(): boolean {
+        return  this.process === undefined || this.process.killed === true;
     }
 
     public async delete(): Promise<this> {

@@ -51,12 +51,12 @@ export class MessageContent {
                 .setStyle(ButtonStyle.Success)
                 .setCustomId(`kirin-start-${this.server.id}`)
                 .setLabel('Start')
-                .setDisabled(this.server.lastPingData?.status == 'ONLINE'),
+                .setDisabled(this.server.lastPingData?.status == 'ONLINE' || !this.server.isStopped()),
             new ButtonBuilder()
                 .setStyle(ButtonStyle.Danger)
                 .setCustomId(`kirin-stop-${this.server.id}`)
                 .setLabel('Stop')
-                .setDisabled(this.server.lastPingData?.status == 'OFFLINE')
+                .setDisabled(this.server.lastPingData?.status == 'OFFLINE' || this.server.isStopped())
         ];
 
         if (this.server.options.hideDisabledButtons) buttons = buttons.filter(b => !b.data.disabled);
@@ -66,7 +66,7 @@ export class MessageContent {
 
     public parse(): MessageEditOptions {
         return {
-            content: null,
+            content: ' ',
             embeds: [this.getEmbed()],
             components: [this.buttons()]
         };
