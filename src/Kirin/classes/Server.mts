@@ -1,12 +1,13 @@
-import { ChildProcess } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { KirinModule } from '../../kirin.mjs';
 import { Awaitable, Collection, If, Message, MessageManager, TextBasedChannel } from 'discord.js';
 import { randomUUID } from 'crypto';
 import { ServerConfig } from '../utils/serversConfig.mjs';
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { Logger } from 'fallout-utility';
+import { Logger, LoggerLevel, path } from 'fallout-utility';
 import { NewPingResult, ping } from 'minecraft-protocol';
 import { setTimeout } from 'timers/promises';
+import { setTimeout as setTimeoutSync } from 'timers';
 import { EventEmitter } from 'events';
 import { MessageContent } from './MessageContent.mjs';
 
@@ -54,6 +55,7 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
     get channel() { return this._channel as If<Ready, TextBasedChannel>; }
     get message() { return this._message as If<Ready, Message>; }
     get client() { return this.kirin.client; }
+    get cwd() { return this.options.server.cwd }
     get startCommand() { return `${this.options.server.serverExecutable} ${this.options.server.args.join(' ')}`.trim() }
 
     constructor(readonly options: ServerOptions) {
@@ -85,6 +87,49 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
         return this as Server<true>;
     }
 
+    public async start(): Promise<this> {
+        if (this.process) throw new Error(`Process is already started`);
+
+        this.logger?.warn(`Starting ${this.name}:\n`, `  cwd: ${this.cwd}\n`, `  cmd: ${this.startCommand}`);
+
+        this.process = spawn(this.options.server.serverExecutable, this.options.server.args ?? [], {
+            cwd: path.resolve(this.options.server.cwd),
+            env: { ...process.env, FORCE_COLOR: 'true' },
+            detached: !(this.options.stopServerOnExit ?? this.kirin.config.defaults.stopServerOnExit),
+            killSignal: this.options.killSignal || this.kirin.config.defaults.killSignal || undefined,
+            shell: true
+        });
+
+        this.process.stdout?.on('data', data => this.logServerMessage(LoggerLevel.INFO, data.toString('utf-8').trim()));
+        this.process.stderr?.on('data', data => this.logServerMessage(LoggerLevel.ERROR, data.toString('utf-8').trim()));
+
+        this.process.on('error', (data) => this.logger?.err(data));
+
+        this.process.once('close', async (code, signal) => {
+            this.logger?.log(`${this.name} closed: ${code}; signal: ${signal}`);
+            await this.stop();
+        });
+
+        return this;
+    }
+
+    public async stop(): Promise<boolean> {
+        if (!this.process || this.process.killed || !this.process.connected) return true;
+
+        if (this.process.kill(this.killSignal)) {
+            if (!this.process || this.process.killed) return true;
+
+            return new Promise((res, rej) => {
+                const timeout = setTimeoutSync(() => res(false), 5000);
+
+                this.process?.once('close', () => { res(true); clearTimeout(timeout); });
+                this.process?.once('exit', () => { res(true); clearTimeout(timeout); });
+            });
+        }
+
+        return false;
+    }
+
     public async ping(loop: boolean = false): Promise<ServerPingData|null> {
         if (!loop && !this.deleted) throw new Error(`This server has already been deleted!`);
         if (loop && this.deleted) return null;
@@ -92,6 +137,7 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
         const data = await Server.pingServer({ host: this.host, port: this.port, timeout: this.kirin.config.ping.pingTimeoutMs });
 
         this.emit('ping', data);
+        this.logger?.debug(`Pinged ${this.ip}! Current server status: ${data.status}`);
 
         if (this.lastPingData?.status !== data.status) this.emit('statusUpdate', this.lastPingData, data);
 
@@ -136,7 +182,24 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
         await EventEmitter.once(this, 'pingIntervalStop');
     }
 
-    public static async fetchServers(kirin: KirinModule): Promise<Collection<string, Server<true>>> {
+    protected logServerMessage(level: LoggerLevel, message: string): void {
+        switch (level) {
+            case LoggerLevel.INFO:
+                this.logger?.log(message);
+                break;
+            case LoggerLevel.ERROR:
+                this.logger?.err(message);
+                break;
+            case LoggerLevel.WARN:
+                this.logger?.warn(message);
+                break;
+            case LoggerLevel.DEBUG:
+                this.logger?.err(message);
+                break;
+        }
+    }
+
+    public static async fetchServers(kirin: KirinModule, ping: boolean = false): Promise<Collection<string, Server<true>>> {
         const servers: Collection<string, Server<true>> = new Collection();
 
         for (const serverConfig of kirin.serversConfig) {
@@ -148,6 +211,8 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
             try {
                 await server.load();
                 servers.set(server.id, server);
+
+                if (ping) server.ping(true);
             } catch (err) {
                 server.logger?.err(`Unable to load server '${server.name}':\n`, err);
             }

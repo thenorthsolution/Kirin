@@ -21,6 +21,8 @@ export interface BaseServerConfig {
     killSignal?: KirinConfig['defaults']['killSignal']|null;
     debug?: boolean|null;
     showStatus?: boolean;
+    stopServerOnExit?: boolean;
+    enableServerMessages?: boolean;
     [key: string]: any;
 }
 
@@ -44,6 +46,8 @@ export const defaultServerConfig = {
     permissions: defaultKirinConfig.defaults.permissions,
     killSignal: defaultKirinConfig.defaults.killSignal,
     showStatusDetails: true,
+    stopServerOnExit: false,
+    enableServerMessages: true,
     debug: false
 } satisfies BaseServerConfig;
 

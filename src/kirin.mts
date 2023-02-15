@@ -25,13 +25,16 @@ export class KirinModule implements RecipleModuleScript {
         return true;
     }
 
-    public async onLoad(client: RecipleClient<true>, module: RecipleModule): Promise<void> {}
+    public async onLoad(client: RecipleClient<true>, module: RecipleModule): Promise<void> {
+        this.logger?.log(`Loading servers...`);
+
+        this.servers = await Server.fetchServers(this, true);
+
+        this.logger?.log(`Loaded ${this.servers.size} servers`);
+    }
 
     public async onUnload(unloadData: RecipleModuleScriptUnloadData): Promise<void> {
         this.logger?.log(`Stopping attached servers...`);
-
-        this.servers = await Server.fetchServers(this);
-
         this.logger?.log(`Unloaded Kirin!`);
     }
 

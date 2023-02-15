@@ -15,6 +15,8 @@ export interface BaseKirinConfig {
             stop: BaseKirinConfig['defaults']['permissions']['start'];
         };
         debug: boolean;
+        stopServerOnExit: boolean;
+        enableServerMessages: boolean;
     };
     [key: string]: any;
 };
@@ -33,7 +35,9 @@ export const defaultKirinConfig = {
             }
         },
         hideDisabledButtons: true,
-        debug: true
+        debug: true,
+        stopServerOnExit: false,
+        enableServerMessages: true
     },
     ping: {
         pingIntervalMs: 10000,
