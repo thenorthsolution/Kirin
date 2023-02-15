@@ -35,6 +35,25 @@ export class KirinModule implements RecipleModuleScript {
 
     public async onUnload(unloadData: RecipleModuleScriptUnloadData): Promise<void> {
         this.logger?.log(`Stopping attached servers...`);
+
+        for (const server of this.servers.toJSON()) {
+            try {
+                await server.message?.edit({ embeds: [server.messageContent.getUnloadedEmbed()], components: [] });
+
+                if (server.options.stopServerOnExit) {
+                    const stopped = await server.stop();
+
+                    if (stopped) {
+                        this.logger?.log(`Stopped ${server.name}`);
+                    } else {
+                        this.logger?.err(`Failed to stop ${server.name}`);
+                    }
+                }
+            } catch (err) {
+                this.logger?.err(`An error occured while unloading server: ${server.name}`);
+            }
+        }
+
         this.logger?.log(`Unloaded Kirin!`);
     }
 

@@ -5,12 +5,10 @@ export class MessageContent {
 
     constructor(readonly server: Server) {}
 
-    public getEmbed() {
-        const embed = new EmbedBuilder();
+    public getEmbed(): EmbedBuilder {
+        const embed = this.getUnloadedEmbed();
 
         embed.setColor(this.server.kirin.getMessage<ColorResolvable>(this.server.lastPingData?.status === 'ONLINE' ? 'onlineEmbedColor' : 'offlineEmbedColor'));
-        embed.setTitle(this.server.name);
-        embed.setFooter({ text: this.server.ip });
         embed.setTimestamp(this.server.lastPingData?.pingedAt);
 
         if (this.server.description) embed.setDescription(this.server.description);
@@ -33,6 +31,16 @@ export class MessageContent {
                 inline: true
             }
         );
+
+        return embed;
+    }
+
+    public getUnloadedEmbed(): EmbedBuilder {
+        const embed = new EmbedBuilder();
+
+        embed.setColor('DarkButNotBlack');
+        embed.setTitle(this.server.name);
+        embed.setFooter({ text: this.server.ip });
 
         return embed;
     }

@@ -110,6 +110,11 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
             await this.stop();
         });
 
+        this.process.once('disconnect', async () => {
+            this.logger?.warn(`(PID: ${this.process?.pid}) process disconnected!`);
+            await this.stop();
+        });
+
         return this;
     }
 
@@ -120,8 +125,9 @@ export class Server<Ready extends boolean = boolean> extends TypedEmitter<Server
             if (!this.process || this.process.killed) return true;
 
             return new Promise((res, rej) => {
-                const timeout = setTimeoutSync(() => res(false), 5000);
+                const timeout = setTimeoutSync(() => res(false), 1000 * 20);
 
+                this.process?.once('disconnect', () => { res(true); clearTimeout(timeout); });
                 this.process?.once('close', () => { res(true); clearTimeout(timeout); });
                 this.process?.once('exit', () => { res(true); clearTimeout(timeout); });
             });
