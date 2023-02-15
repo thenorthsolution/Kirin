@@ -6,6 +6,7 @@ import yml from 'yaml';
 export interface BaseKirinConfig {
     defaults: {
         hideDisabledButtons: boolean;
+        killSignal: NodeJS.Signals;
         permissions: {
             start: {
                 allowedPermissions: PermissionResolvable;
@@ -19,6 +20,7 @@ export interface BaseKirinConfig {
 
 export const defaultKirinConfig = {
     defaults: {
+        killSignal: 'SIGTERM',
         permissions: {
             start: {
                 allowedPermissions: [],

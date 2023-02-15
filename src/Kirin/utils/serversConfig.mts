@@ -1,5 +1,5 @@
 import { createReadFile, path } from 'fallout-utility';
-import { defaultKirinConfig } from './config.mjs';
+import { KirinConfig, defaultKirinConfig } from './config.mjs';
 import { cwd } from 'reciple';
 import yml from 'yaml';
 
@@ -7,12 +7,14 @@ export type DoNothing<T> = T;
 
 export interface BaseServerConfig {
     name: string;
-    description: string;
+    description?: string|null;
     server: {
         cwd: string;
         serverExecutable: string;
         args: string[];
     };
+    permissions?: Partial<KirinConfig['defaults']['permissions']>|null;
+    killSignal?: KirinConfig['defaults']['killSignal']|null;
     [key: string]: any;
 }
 
@@ -29,7 +31,8 @@ export const defaultServerConfig = {
         serverExecutable: '',
         args: []
     },
-    permissions: defaultKirinConfig.defaults.permissions
+    permissions: defaultKirinConfig.defaults.permissions,
+    killSignal: defaultKirinConfig.defaults.killSignal
 } satisfies BaseServerConfig;
 
 export type ServerConfig = typeof defaultServerConfig & BaseServerConfig;
