@@ -163,7 +163,7 @@ export class Server<Ready extends boolean = boolean> {
 
     public async stop(): Promise<boolean> {
         if (!this.process) throw new Error('Server is already stopped');
-        if (!this.isStopped()) return true;
+        if (this.isStopped()) return true;
 
         this.logger?.warn(`Stopping ${this.name}...`);
 
