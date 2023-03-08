@@ -166,7 +166,8 @@ export class Server<Ready extends boolean = boolean> {
 
         this.logger?.warn(`Stopping ${this.name}...`);
 
-        const kill = this.process.kill(this.server.killSignal);
+        const kill = process.kill(this.process.pid!, this.server.killSignal);
+
         if (!kill) {
             if (this.isStopped()) {
                 this.process = undefined;
