@@ -10,7 +10,7 @@ import { PingData } from '../utils/ping.js';
 export interface ServerManagerEvents {
     serverCreate: (server: Server) => any;
     serverDelete: (server: Server) => any;
-    serverPing: (oldPing: PingData, newPing: PingData, server: Server) => any;
+    serverPing: (oldPing: PingData|undefined, newPing: PingData, server: Server) => any;
     serverStatusUpdate: (oldStatus: ServerStatus, newStatus: ServerStatus, server: Server) => any;
 }
 

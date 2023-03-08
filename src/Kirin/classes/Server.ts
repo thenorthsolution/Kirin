@@ -186,11 +186,15 @@ export class Server<Ready extends boolean = boolean> {
         if (this.pingInterval) clearInterval(this.pingInterval);
 
         this.pingInterval = setInterval(async () => {
-            this.lastPing = await pingServer({
+            const oldPing = this.lastPing;
+            const newPing = await pingServer({
                 host: this.host,
                 port: this.port,
                 timeout: this.options.ping.pingTimeout
             });
+
+            this.manager.emit('serverPing', oldPing, newPing, this);
+            this.lastPing = newPing;
         }, interval ?? this.options.ping.pingInterval);
     }
 
