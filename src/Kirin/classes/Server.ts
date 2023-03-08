@@ -149,7 +149,7 @@ export class Server<Ready extends boolean = boolean> {
 
         this.process.once('exit', async (code, signal) => {
             this.logger?.warn(`${this.name} exited! Code: ${code}; Signal: ${signal}`);
-            await this.stop();
+            this.process = undefined;
         });
 
         this.process.once('disconnect', async () => {
