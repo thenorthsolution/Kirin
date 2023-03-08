@@ -6,10 +6,18 @@ import path from 'path';
 import { Logger } from 'fallout-utility';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { PingData } from '../utils/ping.js';
+import { ChildProcess } from 'child_process';
 
 export interface ServerManagerEvents {
     serverCreate: (server: Server) => any;
     serverDelete: (server: Server) => any;
+    serverStart: (server: Server) => any;
+    serverStop: (server: Server) => any;
+    serverProcessStart: (childProcess: ChildProcess, server: Server) => any;
+    serverProcessStop: (childProcess: ChildProcess, server: Server) => any;
+    serverProcessError: (error: Error, server: Server) => any;
+    serverProcessStdout: (message: string, server: Server) => any;
+    serverProcessStderr: (message: string, server: Server) => any;
     serverPing: (oldPing: PingData|undefined, newPing: PingData, server: Server) => any;
     serverStatusUpdate: (oldStatus: ServerStatus, newStatus: ServerStatus, server: Server) => any;
 }
@@ -21,6 +29,8 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
     constructor(readonly kirin: Kirin) {
         super();
         this.logger = kirin.logger?.clone({ name: 'Kirin/ServerManager' });
+
+        this.on('serverPing', (oP, nP, srv) => this.logger?.debug(`${srv.name}: ${srv.status}`))
     }
 
     public mountRoutes(): this {

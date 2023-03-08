@@ -6,6 +6,7 @@ import { readFileSync, rmSync, writeFileSync } from 'fs';
 import { ChildProcess, spawn } from 'child_process';
 import { PingData, pingServer } from '../utils/ping.js';
 import { resolveFromCachedManager } from '../utils/managers.js';
+import { Logger } from 'fallout-utility';
 
 export interface ServerData {
     name: string;
@@ -48,6 +49,7 @@ export class Server<Ready extends boolean = boolean> {
     readonly id: string = randomUUID();
     readonly kirin: Kirin;
     readonly manager: ServerManager;
+    readonly logger?: Logger;
 
     private _channel?: Exclude<GuildTextBasedChannel, StageChannel>|null = null;
     private _message?: Message|null = null;
@@ -115,6 +117,63 @@ export class Server<Ready extends boolean = boolean> {
     constructor(readonly options: ServerData, kirin: Kirin) {
         this.kirin = kirin;
         this.manager = kirin.servers;
+        this.logger = kirin.logger?.clone({ name: `Kirin/${this.name}` })
+    }
+
+    public async start(): Promise<this> {
+        if (!this.isStopped()) throw new Error('Server process is already started');
+
+        this.logger?.warn(`Starting ${this.name}...`);
+
+        this.process = spawn(this.server.command, ["-jar", this.server.jar, ...(this.server.args ?? [])], {
+            cwd: this.server.cwd,
+            detached: !this.server.killOnBotStop,
+            killSignal: this.server.killSignal,
+            env: process.env,
+            shell: true,
+            stdio: [],
+        });
+
+        this.process.stdout?.on('data', (msg: Buffer) => this.manager.emit('serverProcessStdout', msg.toString('utf-8').trim(), this));
+        this.process.stderr?.on('data', (msg: Buffer) => this.manager.emit('serverProcessStderr', msg.toString('utf-8').trim(), this));
+
+        this.process.on('error', err => {
+            this.manager.emit('serverProcessError', err, this);
+            this.logger?.error(err);
+        });
+
+        this.process.on('exit', async (code, signal) => {
+            this.logger?.warn(`${this.name} exited! Code: ${code}; Signal: ${signal}`);
+            await this.stop();
+        });
+
+        this.process.on('disconnect', async () => {
+            this.logger?.warn(`${this.name} disconnected!`);
+            await this.stop();
+        });
+
+        this.manager.emit('serverProcessStart', this.process, this);
+        return this;
+    }
+
+    public async stop(): Promise<boolean> {
+        if (!this.process) throw new Error('Server is already stopped');
+
+        this.logger?.warn(`Stopping ${this.name}...`);
+
+        if (this.process.kill()) {
+            if (this.isStopped()) return true;
+
+            return new Promise((res, rej) => {
+                const timeout = setTimeout(() => res(false), 1000 * 10);
+
+                this.process?.once('disconnect', () => { res(true); clearTimeout(timeout); });
+                this.process?.once('close', () => { res(true); clearTimeout(timeout); });
+                this.process?.once('exit', () => { res(true); clearTimeout(timeout); });
+            });
+        } else {
+            return false;
+        }
     }
 
     public async fetch(): Promise<Server<true>> {
@@ -135,6 +194,7 @@ export class Server<Ready extends boolean = boolean> {
             this._message = message;
         }
 
+        await this.ping();
         this.setPingInterval();
 
         return this as Server<true>;
@@ -168,6 +228,19 @@ export class Server<Ready extends boolean = boolean> {
         this.saveJson();
     }
 
+    public async ping(): Promise<PingData> {
+        const oldPing = this.lastPing;
+        const newPing = await pingServer({
+            host: this.host,
+            port: this.port,
+            timeout: this.options.ping.pingTimeout
+        });
+
+        this.manager.emit('serverPing', oldPing, newPing, this);
+        this.lastPing = newPing;
+        return newPing;
+    }
+
     public saveJson(file?: string): void {
         file = file ?? this.file;
         if (!file) throw new Error('No file path specified');
@@ -182,20 +255,14 @@ export class Server<Ready extends boolean = boolean> {
         return true;
     }
 
+    public isStopped(): boolean {
+        return !this.process || this.process.killed;
+    }
+
     public setPingInterval(interval?: number) {
         if (this.pingInterval) clearInterval(this.pingInterval);
 
-        this.pingInterval = setInterval(async () => {
-            const oldPing = this.lastPing;
-            const newPing = await pingServer({
-                host: this.host,
-                port: this.port,
-                timeout: this.options.ping.pingTimeout
-            });
-
-            this.manager.emit('serverPing', oldPing, newPing, this);
-            this.lastPing = newPing;
-        }, interval ?? this.options.ping.pingInterval);
+        this.pingInterval = setInterval(async () => this.ping(), interval ?? this.options.ping.pingInterval);
     }
 
     public toJSON(withoutId?: false): ServerData & { id: string; };

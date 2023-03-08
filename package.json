@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npx rimraf ./modules && npx tsc",
     "start": "npx reciple",
-    "test": "npm run build && npm run start",
+    "test": "npm run build && npm run start -- --debugmode",
     "build:dashboard": "npm run build -w dashboard"
   },
   "dependencies": {
