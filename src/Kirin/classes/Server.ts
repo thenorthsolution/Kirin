@@ -4,7 +4,7 @@ import { Kirin } from '../../Kirin.js';
 import { ServerManager } from './ServerManager.js';
 import { readFileSync, rmSync, writeFileSync } from 'fs';
 import { ChildProcess, spawn } from 'child_process';
-import { PingData } from '../utils/ping.js';
+import { PingData, pingServer } from '../utils/ping.js';
 import { resolveFromCachedManager } from '../utils/managers.js';
 
 export interface ServerData {
@@ -13,6 +13,7 @@ export interface ServerData {
     file?: string;
     channelId?: string;
     messageId?: string;
+    ip: string;
     server: {
         cwd: string;
         command: string;
@@ -58,6 +59,9 @@ export class Server<Ready extends boolean = boolean> {
     get channel() { return this._channel as If<Ready, Exclude<GuildTextBasedChannel, StageChannel>|undefined>; }
     get messageId() { return this.options.messageId; }
     get message() { return this._message as If<Ready, Message|undefined>; }
+    get ip() { return this.options.ip; }
+    get host() { return this.options.ip.split(':')[0]; }
+    get port() { return Number(this.options.ip.split(':')[1] ?? 25565); }
     get file() { return this.options.file; }
     get server() { return this.options.server; }
     get messages() { return this.options.messages; }
@@ -104,6 +108,7 @@ export class Server<Ready extends boolean = boolean> {
     get cached() { return !!this.manager.cache.get(this.id); }
     get deleted() { return this._deleted; }
 
+    public pingInterval?: NodeJS.Timer;
     public process?: ChildProcess;
     public lastPing?: PingData;
 
@@ -129,6 +134,8 @@ export class Server<Ready extends boolean = boolean> {
 
             this._message = message;
         }
+
+        this.setPingInterval();
 
         return this as Server<true>;
     }
@@ -173,6 +180,18 @@ export class Server<Ready extends boolean = boolean> {
         if (this.messageId && this._message) return false;
 
         return true;
+    }
+
+    public setPingInterval(interval?: number) {
+        if (this.pingInterval) clearInterval(this.pingInterval);
+
+        this.pingInterval = setInterval(async () => {
+            this.lastPing = await pingServer({
+                host: this.host,
+                port: this.port,
+                timeout: this.options.ping.pingTimeout
+            });
+        }, interval ?? this.options.ping.pingInterval);
     }
 
     public toJSON(withoutId?: false): ServerData & { id: string; };
