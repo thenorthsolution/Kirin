@@ -30,7 +30,9 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         super();
         this.logger = kirin.logger?.clone({ name: 'Kirin/ServerManager' });
 
-        this.on('serverPing', (oP, nP, srv) => this.logger?.debug(`${srv.name}: ${srv.status}`))
+        this.on('serverPing', (oP, nP, srv) => srv.logger?.debug(`STATUS: ${srv.status}`));
+        this.on('serverProcessStdout', (msg, srv) => srv.logger?.log(msg));
+        this.on('serverProcessStderr', (msg, srv) => srv.logger?.err(msg));
     }
 
     public mountRoutes(): this {
@@ -43,6 +45,15 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
             }
 
             res.send(this.cache.toJSON().map(s => s.toJSON()))
+        });
+
+        this.kirin.apiClient.express.post('/api/servers/start/:serverId', async (req, res) => {
+            const server = this.cache.get(req.params.serverId);
+            if (!server) return res.status(404).send({ error: 'Server not found' });
+
+            await server.start();
+
+            res.send(server.toJSON());
         });
 
         this.kirin.apiClient.express.delete('/api/servers/:serverId/:deleteFile?', async (req, res) => {

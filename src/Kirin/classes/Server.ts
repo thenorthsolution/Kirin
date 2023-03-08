@@ -117,7 +117,7 @@ export class Server<Ready extends boolean = boolean> {
     constructor(readonly options: ServerData, kirin: Kirin) {
         this.kirin = kirin;
         this.manager = kirin.servers;
-        this.logger = kirin.logger?.clone({ name: `Kirin/${this.name}` })
+        this.logger = kirin.logger?.clone({ name: `Kirin/Server/${this.name}` })
     }
 
     public async start(): Promise<this> {
@@ -137,17 +137,18 @@ export class Server<Ready extends boolean = boolean> {
         this.process.stdout?.on('data', (msg: Buffer) => this.manager.emit('serverProcessStdout', msg.toString('utf-8').trim(), this));
         this.process.stderr?.on('data', (msg: Buffer) => this.manager.emit('serverProcessStderr', msg.toString('utf-8').trim(), this));
 
-        this.process.on('error', err => {
+        this.process.once('error', async err => {
             this.manager.emit('serverProcessError', err, this);
+            await this.stop();
             this.logger?.error(err);
         });
 
-        this.process.on('exit', async (code, signal) => {
+        this.process.once('exit', async (code, signal) => {
             this.logger?.warn(`${this.name} exited! Code: ${code}; Signal: ${signal}`);
             await this.stop();
         });
 
-        this.process.on('disconnect', async () => {
+        this.process.once('disconnect', async () => {
             this.logger?.warn(`${this.name} disconnected!`);
             await this.stop();
         });
@@ -161,19 +162,28 @@ export class Server<Ready extends boolean = boolean> {
 
         this.logger?.warn(`Stopping ${this.name}...`);
 
-        if (this.process.kill()) {
-            if (this.isStopped()) return true;
+        const kill = this.process.kill(this.server.killSignal);
+        if (!kill) {
+            if (this.isStopped()) {
+                this.process = undefined;
+                return true;
+            }
 
-            return new Promise((res, rej) => {
+            return new Promise(res => {
                 const timeout = setTimeout(() => res(false), 1000 * 10);
+                const handle = () => {
+                    this.process = undefined;
+                    clearTimeout(timeout);
+                    res(true);
+                }
 
-                this.process?.once('disconnect', () => { res(true); clearTimeout(timeout); });
-                this.process?.once('close', () => { res(true); clearTimeout(timeout); });
-                this.process?.once('exit', () => { res(true); clearTimeout(timeout); });
+                this.process?.once('disconnect', handle);
+                this.process?.once('close', handle);
+                this.process?.once('exit', handle);
             });
-        } else {
-            return false;
         }
+
+        return true;
     }
 
     public async fetch(): Promise<Server<true>> {
@@ -256,7 +266,7 @@ export class Server<Ready extends boolean = boolean> {
     }
 
     public isStopped(): boolean {
-        return !this.process || this.process.killed;
+        return !this.process || this.process.killed || !!this.process.exitCode;
     }
 
     public setPingInterval(interval?: number) {
