@@ -7,11 +7,11 @@ import { Logger } from 'fallout-utility';
 import { recursiveDefaults } from 'reciple';
 
 export class APIClient<Ready extends boolean = false> {
-    private _express: Express|null = null;
+    private _express: Express = express();
     private _socket: SocketServer|null = null;
     private _http: HttpServer|null = null;
 
-    get express() { return this._express as If<Ready, Express>; }
+    get express() { return this._express; }
     get socket() { return this._socket as If<Ready, SocketServer> }
     get http() { return this._http as If<Ready, HttpServer>; }
 
@@ -23,8 +23,6 @@ export class APIClient<Ready extends boolean = false> {
 
     public async start(): Promise<APIClient<true>> {
         if (this.isReady()) throw new Error('This client is already started');
-
-        this._express = express();
 
         const dashboard = recursiveDefaults<any>(await import(('../../../dashboard/build/handler.js')));
 
