@@ -56,6 +56,15 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
             res.send(server.toJSON());
         });
 
+        this.kirin.apiClient.express.post('/api/servers/stop/:serverId', async (req, res) => {
+            const server = this.cache.get(req.params.serverId);
+            if (!server) return res.status(404).send({ error: 'Server not found' });
+
+            await server.stop();
+
+            res.send(server.toJSON());
+        });
+
         this.kirin.apiClient.express.delete('/api/servers/:serverId/:deleteFile?', async (req, res) => {
             const serverId = req.params.serverId;
             const deleteFile = req.params.deleteFile === 'true';

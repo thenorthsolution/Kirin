@@ -7,6 +7,8 @@ import { ChildProcess, spawn } from 'child_process';
 import { PingData, pingServer } from '../utils/ping.js';
 import { resolveFromCachedManager } from '../utils/managers.js';
 import { Logger } from 'fallout-utility';
+import path from 'path';
+import { cwd } from 'reciple';
 
 export interface ServerData {
     name: string;
@@ -107,6 +109,7 @@ export class Server<Ready extends boolean = boolean> {
         return 'Offline';
     }
 
+    get cwd () { return path.isAbsolute(this.server.cwd) ? this.server.cwd : path.join(cwd, this.server.cwd); }
     get cached() { return !!this.manager.cache.get(this.id); }
     get deleted() { return this._deleted; }
 
@@ -124,9 +127,10 @@ export class Server<Ready extends boolean = boolean> {
         if (!this.isStopped()) throw new Error('Server process is already started');
 
         this.logger?.warn(`Starting ${this.name}...`);
+        this.logger?.debug(`Starting ${this.name}: Cwd: ${this.cwd}; Jar: ${this.server.jar}`);
 
         this.process = spawn(this.server.command, ["-jar", this.server.jar, ...(this.server.args ?? [])], {
-            cwd: this.server.cwd,
+            cwd: this.cwd,
             detached: !this.server.killOnBotStop,
             killSignal: this.server.killSignal,
             env: process.env,
@@ -275,11 +279,11 @@ export class Server<Ready extends boolean = boolean> {
         this.pingInterval = setInterval(async () => this.ping(), interval ?? this.options.ping.pingInterval);
     }
 
-    public toJSON(withoutId?: false): ServerData & { id: string; };
-    public toJSON(withoutId?: true): ServerData;
-    public toJSON(withoutId: boolean = false): ServerData & { id?: string; } {
+    public toJSON(serverData?: true): ServerData & { id: string; status: ServerStatus; };
+    public toJSON(serverData?: false): ServerData;
+    public toJSON(serverData: boolean = true): ServerData & { id?: string; status?: ServerStatus; } {
         return {
-            ...(withoutId ? {} : { id: this.id }),
+            ...(serverData ? { id: this.id, status: this.status } : {}),
             ...this.options
         };
     }
