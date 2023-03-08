@@ -131,7 +131,7 @@ dist
 
 # Output files
 modules
-config/config.json
+config
 
 # Dashboard
 .DS_Store
