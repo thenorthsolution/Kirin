@@ -1,15 +1,25 @@
-import { Collection } from 'discord.js';
-import { Server } from './Server.js';
+import { Awaitable, Collection } from 'discord.js';
+import { Server, ServerStatus } from './Server.js';
 import { Kirin } from '../../Kirin.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import path from 'path';
 import { Logger } from 'fallout-utility';
+import { TypedEmitter } from 'tiny-typed-emitter';
+import { PingData } from '../utils/ping.js';
 
-export class ServerManager {
+export interface ServerManagerEvents {
+    serverCreate: (server: Server) => any;
+    serverDelete: (server: Server) => any;
+    serverPing: (oldPing: PingData, newPing: PingData, server: Server) => any;
+    serverStatusUpdate: (oldStatus: ServerStatus, newStatus: ServerStatus, server: Server) => any;
+}
+
+export class ServerManager extends TypedEmitter<ServerManagerEvents> {
     readonly cache: Collection<string, Server<true>> = new Collection();
     readonly logger?: Logger;
 
     constructor(readonly kirin: Kirin) {
+        super();
         this.logger = kirin.logger?.clone({ name: 'Kirin/ServerManager' });
     }
 

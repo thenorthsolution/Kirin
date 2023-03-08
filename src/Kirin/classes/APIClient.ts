@@ -6,7 +6,7 @@ import { If } from 'discord.js';
 import { Logger } from 'fallout-utility';
 import { recursiveDefaults } from 'reciple';
 
-export class APIClient<Ready extends boolean = false> {
+export class APIClient<Ready extends boolean = boolean> {
     private _express: Express = express();
     private _socket: SocketServer|null = null;
     private _http: HttpServer|null = null;
