@@ -4,6 +4,7 @@ import express, { Express } from 'express';
 import { Server as HttpServer } from 'http';
 import { If } from 'discord.js';
 import { Logger } from 'fallout-utility';
+import { recursiveDefaults } from 'reciple';
 
 export class APIClient<Ready extends boolean = false> {
     private _express: Express|null = null;
@@ -25,8 +26,12 @@ export class APIClient<Ready extends boolean = false> {
 
         this._express = express();
 
+        const dashboard = recursiveDefaults<any>(await import(('../../../dashboard/build/handler.js')));
+
+        this._express.use(dashboard.handler);
+
         await new Promise(res => {
-            this._http = this._express?.listen(() => res(this._http)) || null;
+            this._http = this._express?.listen(this.kirin.config.apiPort, () => res(this._http)) || null;
         });
 
         this._socket = new SocketServer({ transports: ["websocket"] });

@@ -20,14 +20,14 @@ export class Kirin implements RecipleModuleScript {
 
         this.logger?.log(`Starting Kirin...`);
 
-        await this.apiClient.start();
-
-        this.logger?.log(`API is now active! http://127.0.0.1:${this.config.apiPort}/api`);
-
         return true;
     }
 
-    public async onLoad(client: RecipleClient<true>, module: RecipleModule): Promise<void> {}
+    public async onLoad(client: RecipleClient<true>, module: RecipleModule): Promise<void> {
+        await this.apiClient.start();
+
+        this.logger?.log(`Kirin is now active! http://127.0.0.1:${this.config.apiPort}`);
+    }
 
     public async onUnload(unloadData: RecipleModuleScriptUnloadData): Promise<void> {}
 }
