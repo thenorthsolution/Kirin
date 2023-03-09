@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 
 export class APIClient<Ready extends boolean = boolean> {
     private _express: Express = express();
@@ -34,6 +35,7 @@ export class APIClient<Ready extends boolean = boolean> {
 
         this._express.use(bodyParser.urlencoded({ extended: false }));
         this._express.use(bodyParser.json());
+        this._express.use(cors({ origin: "*" }));
 
         await this.loadRoutes();
         this._express.use(recursiveDefaults<any>(await import(('../../../dashboard/build/handler.js'))).handler);

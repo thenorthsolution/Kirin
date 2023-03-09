@@ -1,1 +1,5 @@
-<h1>BItch</h1>
+<script lang="ts">
+    import '../assets/css/style.scss';
+</script>
+
+<h1>Bitch</h1>
