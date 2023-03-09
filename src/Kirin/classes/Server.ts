@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ChannelType, GuildTextBasedChannel, If, InteractionButtonComponentData, Message, MessageActionRowComponentBuilder, PermissionResolvable, PermissionsBitField, StageChannel, TextBasedChannel } from 'discord.js';
+import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ChannelType, Guild, GuildTextBasedChannel, If, InteractionButtonComponentData, Message, MessageActionRowComponentBuilder, PermissionResolvable, PermissionsBitField, StageChannel, TextBasedChannel } from 'discord.js';
 import { Kirin } from '../../Kirin.js';
 import { ServerManager } from './ServerManager.js';
 import { readFileSync, rmSync, writeFileSync } from 'fs';
@@ -61,6 +61,7 @@ export class Server<Ready extends boolean = boolean> {
     get description() { return this.options.description; }
     get channelId() { return this.options.channelId; }
     get channel() { return this._channel as If<Ready, Exclude<GuildTextBasedChannel, StageChannel>|undefined>; }
+    get guild() { return (this._channel !== null ? this._channel?.guild : null) as If<Ready, Guild|undefined>; }
     get messageId() { return this.options.messageId; }
     get message() { return this._message as If<Ready, Message|undefined>; }
     get ip() { return this.options.ip; }
@@ -217,7 +218,7 @@ export class Server<Ready extends boolean = boolean> {
     }
 
     public async delete(deleteJsonFile: boolean = false): Promise<void> {
-        if (!this.isStopped()) await this.stop();
+        if (!this.isStopped() && (deleteJsonFile || this.server.killOnBotStop)) await this.stop();
 
         this.manager.emit('serverDelete', this as Server);
         this.manager.cache.delete(this.id);

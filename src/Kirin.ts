@@ -27,8 +27,6 @@ export class Kirin implements RecipleModuleScript {
     }
 
     public async onLoad(client: RecipleClient<true>, module: RecipleModule): Promise<void> {
-        this.servers.mountRoutes();
-
         await this.apiClient.start();
 
         this.logger?.log(`Kirin is now active! http://127.0.0.1:${this.config.apiPort}`);
@@ -36,7 +34,9 @@ export class Kirin implements RecipleModuleScript {
         await this.servers.loadServersFromDir(path.join(cwd, this.config.serversFolders))
     }
 
-    public async onUnload(unloadData: RecipleModuleScriptUnloadData): Promise<void> {}
+    public async onUnload(unloadData: RecipleModuleScriptUnloadData): Promise<void> {
+        this.servers.unmountClientListeners();
+    }
 }
 
 export default new Kirin();

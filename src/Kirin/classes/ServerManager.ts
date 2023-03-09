@@ -1,4 +1,4 @@
-import { Awaitable, Collection } from 'discord.js';
+import { Awaitable, Channel, Collection, Guild, Message } from 'discord.js';
 import { Server, ServerStatus } from './Server.js';
 import { Kirin } from '../../Kirin.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
@@ -30,54 +30,17 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         super();
         this.logger = kirin.logger?.clone({ name: 'Kirin/ServerManager' });
 
+        this._onGuildDelete = this._onGuildDelete.bind(this);
+        this._onChannelDelete = this._onChannelDelete.bind(this);
+        this._onMessageDelete = this._onMessageDelete.bind(this);
+
+        this.kirin.client.on('guildDelete', this._onGuildDelete);
+        this.kirin.client.on('channelDelete', this._onChannelDelete);
+        this.kirin.client.on('messageDelete', this._onMessageDelete);
+
         this.on('serverPing', (oP, nP, srv) => srv.logger?.debug(`STATUS: ${srv.status}`));
         this.on('serverProcessStdout', (msg, srv) => srv.logger?.log(msg));
         this.on('serverProcessStderr', (msg, srv) => srv.logger?.err(msg));
-    }
-
-    public mountRoutes(): this {
-        this.kirin.apiClient.express.get('/api/servers/:serverId?', (req, res) => {
-            if (req.params.serverId) {
-                const server = this.cache.get(req.params.serverId);
-                if (!server) return res.status(404).send({ error: 'Server not found' });
-
-                return res.send(server.toJSON());
-            }
-
-            res.send(this.cache.toJSON().map(s => s.toJSON()))
-        });
-
-        this.kirin.apiClient.express.post('/api/servers/start/:serverId', async (req, res) => {
-            const server = this.cache.get(req.params.serverId);
-            if (!server) return res.status(404).send({ error: 'Server not found' });
-
-            await server.start();
-
-            res.send(server.toJSON());
-        });
-
-        this.kirin.apiClient.express.post('/api/servers/stop/:serverId', async (req, res) => {
-            const server = this.cache.get(req.params.serverId);
-            if (!server) return res.status(404).send({ error: 'Server not found' });
-
-            await server.stop();
-
-            res.send(server.toJSON());
-        });
-
-        this.kirin.apiClient.express.delete('/api/servers/:serverId/:deleteFile?', async (req, res) => {
-            const serverId = req.params.serverId;
-            const deleteFile = req.params.deleteFile === 'true';
-            const server = this.cache.get(serverId);
-
-            if (!server) return res.status(404).send({ error: 'Server not found' });
-
-            await server.delete(deleteFile);
-
-            res.send(server.toJSON());
-        });
-
-        return this;
     }
 
     public async loadServersFromDir(dir: string, cache: boolean = true): Promise<Server[]> {
@@ -98,5 +61,35 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         }
 
         return loaded;
+    }
+
+    public unmountClientListeners(): void {
+        this.kirin.client.removeListener('guildDelete', this._onGuildDelete);
+        this.kirin.client.removeListener('channelDelete', this._onChannelDelete);
+        this.kirin.client.removeListener('messageDelete', this._onMessageDelete);
+    }
+
+    private async _onGuildDelete(guild: Guild): Promise<void> {
+        const servers = this.cache.filter(s => s.guild?.id === guild.id);
+
+        for (const server of (servers?.toJSON() || [])) {
+            await server.delete(false);
+        }
+    }
+
+    private async _onChannelDelete(channel: Channel): Promise<void> {
+        const servers = this.cache.filter(s => s.channel?.id === channel.id);
+
+        for (const server of (servers?.toJSON() || [])) {
+            await server.delete(false);
+        }
+    }
+
+    private async _onMessageDelete(message: Message): Promise<void> {
+        const servers = this.cache.filter(s => s.message?.id === message.id);
+
+        for (const server of (servers?.toJSON() || [])) {
+            await server.delete(false);
+        }
     }
 }
