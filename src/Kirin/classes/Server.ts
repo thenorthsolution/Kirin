@@ -317,7 +317,7 @@ export class Server<Ready extends boolean = boolean> {
         return server;
     }
 
-    public static validateServerData(obj: ServerData): asserts obj is ServerData {
+    public static validateServerData(obj: any, promise: boolean = false): asserts obj is ServerData {
         if (!obj || typeof obj !== 'object') return;
 
         if (!obj.name) throw new Error('Name is required');
