@@ -1,5 +1,5 @@
 import { Awaitable, Channel, Collection, Guild, Message } from 'discord.js';
-import { Server, ServerStatus } from './Server.js';
+import { Server, ServerData, ServerStatus } from './Server.js';
 import { Kirin } from '../../Kirin.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import path from 'path';
@@ -11,6 +11,7 @@ import { ChildProcess } from 'child_process';
 export interface ServerManagerEvents {
     serverCreate: (server: Server) => any;
     serverDelete: (server: Server) => any;
+    serverUpdate: (server: Server, oldServerData: ServerData) => any;
     serverStart: (server: Server) => any;
     serverStop: (server: Server) => any;
     serverProcessStart: (childProcess: ChildProcess, server: Server) => any;

@@ -9,6 +9,8 @@ import { resolveFromCachedManager } from '../utils/managers.js';
 import { Logger } from 'fallout-utility';
 import path from 'path';
 import { cwd } from 'reciple';
+import { PartialDeep } from 'type-fest';
+import defaultsDeep from 'lodash.defaultsdeep';
 
 export interface ServerData {
     name: string;
@@ -118,7 +120,7 @@ export class Server<Ready extends boolean = boolean> {
     public process?: ChildProcess;
     public lastPing?: PingData;
 
-    constructor(readonly options: ServerData, kirin: Kirin) {
+    constructor(public options: ServerData, kirin: Kirin) {
         this.kirin = kirin;
         this.manager = kirin.servers;
         this.logger = kirin.logger?.clone({ name: `Kirin/Server/${this.name}` })
@@ -227,6 +229,31 @@ export class Server<Ready extends boolean = boolean> {
         this._deleted = true;
 
         if (deleteJsonFile && this.file) rmSync(this.file, { force: true, recursive: true });
+    }
+
+    public async update(options: PartialDeep<ServerData>): Promise<this> {
+        const oldOptions = this.options;
+        const newOptions = defaultsDeep(options, this.options) as ServerData;
+        const isFetch = newOptions.channelId !== this.options.channelId
+            || newOptions.messageId !== this.options.messageId
+            || newOptions.ip !== this.options.ip
+            || newOptions.ping.pingInterval !== this.options.ping.pingInterval
+            || newOptions.ping.pingTimeout !== this.options.ping.pingTimeout;
+
+        const isNeedsRestart = newOptions.server.args !== this.options.server.args
+            || newOptions.server.command !== this.options.server.command
+            || newOptions.server.cwd !== this.options.server.cwd
+            || newOptions.server.jar !== this.options.server.jar;
+
+        this.manager.emit('serverUpdate', this, oldOptions);
+        this.options = newOptions;
+
+        if (isFetch) await this.fetch();
+        if (!oldOptions.messageId && newOptions.messageId && this.channel) await this.createMessage({ deleteOld: true });
+
+        this.saveJson();
+
+        return this;
     }
 
     public async createMessage(options: { deleteOld?: boolean; channel?: Exclude<GuildTextBasedChannel, StageChannel> }): Promise<void> {
