@@ -163,7 +163,7 @@ export class Server<Ready extends boolean = boolean> {
 
     public async stop(): Promise<boolean> {
         if (!this.process) throw new Error('Server is already stopped');
-        if (this.isStopped()) return true;
+        if (this.isStopped() || !this.process.pid) return true;
 
         this.logger?.warn(`Stopping ${this.name}...`);
 
@@ -217,10 +217,14 @@ export class Server<Ready extends boolean = boolean> {
     }
 
     public async delete(deleteJsonFile: boolean = false): Promise<void> {
-        if (deleteJsonFile && this.file) rmSync(this.file, { force: true, recursive: true });
+        if (!this.isStopped()) await this.stop();
+
         this.manager.emit('serverDelete', this as Server);
         this.manager.cache.delete(this.id);
+
         this._deleted = true;
+
+        if (deleteJsonFile && this.file) rmSync(this.file, { force: true, recursive: true });
     }
 
     public async createMessage(options: { deleteOld?: boolean; channel?: Exclude<GuildTextBasedChannel, StageChannel> }): Promise<void> {
@@ -272,7 +276,7 @@ export class Server<Ready extends boolean = boolean> {
     }
 
     public isStopped(): boolean {
-        return !this.process || this.process.killed || !!this.process.exitCode;
+        return !this.process || !!this.process.exitCode || this.process.killed;
     }
 
     public setPingInterval(interval?: number) {
