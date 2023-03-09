@@ -56,6 +56,7 @@ export class Server<Ready extends boolean = boolean> {
     private _channel?: Exclude<GuildTextBasedChannel, StageChannel>|null = null;
     private _message?: Message|null = null;
     private _deleted: boolean = false;
+    private _pingInterval?: NodeJS.Timer;
 
     get name() { return this.options.name; }
     get description() { return this.options.description; }
@@ -114,7 +115,6 @@ export class Server<Ready extends boolean = boolean> {
     get cached() { return !!this.manager.cache.get(this.id); }
     get deleted() { return this._deleted; }
 
-    public pingInterval?: NodeJS.Timer;
     public process?: ChildProcess;
     public lastPing?: PingData;
 
@@ -219,6 +219,7 @@ export class Server<Ready extends boolean = boolean> {
 
     public async delete(deleteJsonFile: boolean = false): Promise<void> {
         if (!this.isStopped() && (deleteJsonFile || this.server.killOnBotStop)) await this.stop();
+        if (this._pingInterval) clearInterval(this._pingInterval);
 
         this.manager.emit('serverDelete', this as Server);
         this.manager.cache.delete(this.id);
@@ -281,9 +282,9 @@ export class Server<Ready extends boolean = boolean> {
     }
 
     public setPingInterval(interval?: number) {
-        if (this.pingInterval) clearInterval(this.pingInterval);
+        if (this._pingInterval) clearInterval(this._pingInterval);
 
-        this.pingInterval = setInterval(async () => this.ping(), interval ?? this.options.ping.pingInterval);
+        this._pingInterval = setInterval(async () => this.ping(), interval ?? this.options.ping.pingInterval);
     }
 
     public toJSON(serverData?: true): ServerData & { id: string; status: ServerStatus; };
@@ -314,5 +315,33 @@ export class Server<Ready extends boolean = boolean> {
         }
 
         return server;
+    }
+
+    public static validateServerData(obj: ServerData): asserts obj is ServerData {
+        if (!obj || typeof obj !== 'object') return;
+
+        if (!obj.name) throw new Error('Name is required');
+        if (!obj.ip) throw new Error('Server IP is required');
+
+        if (!obj.server) throw new Error('Property "server" is required');
+        if (!obj.server.cwd) throw new Error('Server cwd is required');
+        if (!obj.server.command) throw new Error('Server command is required');
+        if (!obj.server.jar) throw new Error('Server jar is required');
+        if (obj.server.args && !Array.isArray(obj.server.args)) throw new Error('Server args is not an array');
+
+        if (!obj.messages) throw new Error('Property "messages" is required');
+
+        const missingMessages = ['offline', 'online', 'starting', 'stopping'].filter(m => !Object.keys(obj.messages).includes(m));
+        if (missingMessages.length) throw new Error(`Missing server messages: ${missingMessages.join(' ')}`);
+
+        if (!obj.permissions) throw new Error('Property "permissions" is required');
+        if (!obj.permissions.start) throw new Error('Start permissions is required');
+        if (!obj.permissions.stop) throw new Error('Stop permissions is required');
+
+        if (!obj.ping) throw new Error('Property "ping" is required');
+        if (!obj.ping.pingInterval) throw new Error('Server ping interval is required');
+        if (!obj.ping.pingTimeout) throw new Error('Server ping timeout is required');
+
+        return;
     }
 }

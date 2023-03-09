@@ -1,6 +1,6 @@
 import { Server as SocketServer } from 'socket.io';
 import { Kirin } from '../../Kirin.js';
-import express, { Express } from 'express';
+import express, { Express, Request, Response } from 'express';
 import { Server as HttpServer } from 'http';
 import { Awaitable, If } from 'discord.js';
 import { Logger } from 'fallout-utility';
@@ -8,6 +8,7 @@ import { recursiveDefaults } from 'reciple';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
+import bodyParser from 'body-parser';
 
 export class APIClient<Ready extends boolean = boolean> {
     private _express: Express = express();
@@ -18,7 +19,10 @@ export class APIClient<Ready extends boolean = boolean> {
     get socket() { return this._socket as If<Ready, SocketServer> }
     get http() { return this._http as If<Ready, HttpServer>; }
 
+    get password() { return this.kirin.config.password || null; }
+
     readonly logger?: Logger;
+    readonly apiPath: string = '/api';
     readonly routesDir: string = path.join(path.dirname(fileURLToPath(import.meta.url)), '../routes');
 
     constructor(readonly kirin: Kirin) {
@@ -28,9 +32,12 @@ export class APIClient<Ready extends boolean = boolean> {
     public async start(): Promise<APIClient<true>> {
         if (this.isReady()) throw new Error('This client is already started');
 
-        this._express.use(recursiveDefaults<any>(await import(('../../../dashboard/build/handler.js'))).handler);
+        this._express.use(bodyParser.urlencoded({ extended: false }));
+        this._express.use(bodyParser.json());
 
         await this.loadRoutes();
+        this._express.use(recursiveDefaults<any>(await import(('../../../dashboard/build/handler.js'))).handler);
+
         await new Promise(res => {
             this._http = this._express?.listen(this.kirin.config.apiPort, () => res(this._http)) || null;
         });
@@ -45,7 +52,7 @@ export class APIClient<Ready extends boolean = boolean> {
     public async loadRoutes(): Promise<void> {
         if (!existsSync(this.routesDir)) mkdirSync(this.routesDir);
 
-        const files = readdirSync(this.routesDir).map(f => path.join(this.routesDir, f)).filter(f => lstatSync(f).isFile());
+        const files = readdirSync(this.routesDir).map(f => path.join(this.routesDir, f)).filter(f => f.endsWith('.js') && lstatSync(f).isFile());
 
         for (const file of files) {
             try {
@@ -61,5 +68,17 @@ export class APIClient<Ready extends boolean = boolean> {
 
     public isReady(): this is APIClient<true> {
         return this._express !== null && this._http !== null && this.socket !== null;
+    }
+
+    public authenticate(req: Request): boolean {
+        if (!this.password) return true;
+
+        const password = req.get('password');
+
+        return this.password === password;
+    }
+
+    public errorResponse(res: Response, code: number, err: string): void {
+        res.status(code).send({ error: err });
     }
 }
