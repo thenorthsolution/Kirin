@@ -28,10 +28,9 @@ export class APIClient<Ready extends boolean = boolean> {
     public async start(): Promise<APIClient<true>> {
         if (this.isReady()) throw new Error('This client is already started');
 
-        const dashboard = recursiveDefaults<any>(await import(('../../../dashboard/build/handler.js')));
+        this._express.use(recursiveDefaults<any>(await import(('../../../dashboard/build/handler.js'))).handler);
 
-        this._express.use(dashboard.handler);
-
+        await this.loadRoutes();
         await new Promise(res => {
             this._http = this._express?.listen(this.kirin.config.apiPort, () => res(this._http)) || null;
         });
