@@ -29,6 +29,7 @@ export class KirinAdmin implements RecipleModuleScript {
                         .setDescription('Create a kirin server')
                         .addStringOption(name => name.setName('name').setDescription('Server name').setRequired(true))
                         .addStringOption(ip => ip.setName('ip').setDescription('Local IP and Port').setRequired(true))
+                        .addStringOption(protocol => protocol.setName('protocol').setDescription('Server protocol').setChoices({ name: 'Java', value: 'java' }, { name: 'Bedrock', value: 'bedrock' }).setRequired(true))
                         .addBooleanOption(componentMessage => componentMessage.setName('create-component-message').setDescription('Create message with buttons to stop/start server').setRequired(true))
                         .addStringOption(description => description.setName('description').setDescription('Server name').setRequired(false))
                     )
@@ -57,6 +58,7 @@ export class KirinAdmin implements RecipleModuleScript {
     public async interactionCreateServer(interaction: ChatInputCommandInteraction): Promise<void> {
         const name = interaction.options.getString('name', true);
         const description = interaction.options.getString('description');
+        const protocol = interaction.options.getString('protocol', true) as 'java'|'bedrock';
         const ip = interaction.options.getString('ip', true);
         const createMessage = interaction.options.getBoolean('create-component-message', true);
 
@@ -113,6 +115,7 @@ export class KirinAdmin implements RecipleModuleScript {
 
         const serverData: ServerData = {
             name,
+            protocol,
             description: description || undefined,
             ip,
             server: {

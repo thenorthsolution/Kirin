@@ -14,6 +14,7 @@ import defaultsDeep from 'lodash.defaultsdeep';
 
 export interface ServerData {
     name: string;
+    protocol: 'bedrock'|'java';
     description?: string;
     file?: string;
     channelId?: string;
@@ -61,6 +62,7 @@ export class Server<Ready extends boolean = boolean> {
     private _pingInterval?: NodeJS.Timer;
 
     get name() { return this.options.name; }
+    get protocol() { return this.options.protocol; }
     get description() { return this.options.description; }
     get channelId() { return this.options.channelId; }
     get channel() { return this._channel as If<Ready, Exclude<GuildTextBasedChannel, StageChannel>|undefined>; }
@@ -305,7 +307,8 @@ export class Server<Ready extends boolean = boolean> {
         const newPing = await pingServer({
             host: this.host,
             port: this.port,
-            timeout: this.options.ping.pingTimeout
+            timeout: this.options.ping.pingTimeout,
+            protocol: this.protocol
         });
 
         this.lastPing = newPing;
