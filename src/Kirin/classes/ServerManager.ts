@@ -1,4 +1,4 @@
-import { Channel, Collection, Guild, Message } from 'discord.js';
+import { Channel, Collection, Guild, Interaction, Message } from 'discord.js';
 import { Server, ServerData, ServerStatus } from './Server.js';
 import { Kirin } from '../../Kirin.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
@@ -34,10 +34,12 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         this._onGuildDelete = this._onGuildDelete.bind(this);
         this._onChannelDelete = this._onChannelDelete.bind(this);
         this._onMessageDelete = this._onMessageDelete.bind(this);
+        this._onInteractionCreate = this._onInteractionCreate.bind(this);
 
         this.kirin.client.on('guildDelete', this._onGuildDelete);
         this.kirin.client.on('channelDelete', this._onChannelDelete);
         this.kirin.client.on('messageDelete', this._onMessageDelete);
+        this.kirin.client.on('interactionCreate', this._onInteractionCreate);
 
         this.on('serverPing', (oP, nP, srv) => srv.logger?.debug(`STATUS: ${srv.status}`));
         this.on('serverProcessStdout', (msg, srv) => srv.logger?.log(msg));
@@ -68,6 +70,7 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         this.kirin.client.removeListener('guildDelete', this._onGuildDelete);
         this.kirin.client.removeListener('channelDelete', this._onChannelDelete);
         this.kirin.client.removeListener('messageDelete', this._onMessageDelete);
+        this.kirin.client.removeListener('interactionCreate', this._onInteractionCreate);
     }
 
     private async _onGuildDelete(guild: Guild): Promise<void> {
@@ -92,5 +95,19 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         for (const server of (servers?.toJSON() || [])) {
             await server.delete(false);
         }
+    }
+
+    private async _onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.inCachedGuild() || !interaction.isAutocomplete()) return;
+
+        const option = interaction.options.getFocused(true);
+        const name = option.name;
+        const value = option.value.toLowerCase();
+
+        if (name !== 'server') return;
+
+        const servers = this.cache.filter(s => s.name.toLowerCase() === value || s.name.toLowerCase().includes(value) || s.description?.toLowerCase()?.includes(value) || s.ip.includes(value));
+
+        await interaction.respond(servers.map(s => ({ name: s.name, value: s.id }))).catch(() => {});
     }
 }
