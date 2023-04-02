@@ -1,3 +1,4 @@
+import { PermissionResolvable } from 'discord.js';
 import { createReadFile } from 'fallout-utility';
 import { writeFileSync } from 'fs';
 import defaultsDeep from 'lodash.defaultsdeep';
@@ -5,15 +6,31 @@ import path from 'path';
 import { cwd } from 'reciple';
 
 export interface Config {
-    apiPort: number;
     serversFolders: string;
-    password: string|null;
+    api: {
+        enabled: boolean;
+        port: number;
+        password: string|null;
+    };
+    command: {
+        enabled: boolean;
+        allowInDM: boolean;
+        requiredPermissions: PermissionResolvable;
+    };
 }
 
 export const defaultConfig: Config = {
-    apiPort: 55667,
     serversFolders: 'config/servers/',
-    password: null
+    api: {
+        enabled: false,
+        port: 55667,
+        password: null
+    },
+    command: {
+        enabled: true,
+        allowInDM: false,
+        requiredPermissions: ['SendMessages']
+    }
 };
 
 export function getConfig(): Config {

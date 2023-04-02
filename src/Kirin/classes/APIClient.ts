@@ -21,7 +21,7 @@ export class APIClient<Ready extends boolean = boolean> {
     get socket() { return this._socket as If<Ready, SocketServer> }
     get http() { return this._http as If<Ready, HttpServer>; }
 
-    get password() { return this.kirin.config.password || null; }
+    get password() { return this.kirin.config.api.password || null; }
 
     readonly logger?: Logger;
     readonly apiPath: string = '/api';
@@ -41,7 +41,7 @@ export class APIClient<Ready extends boolean = boolean> {
         await this.loadRoutes();
 
         await new Promise(res => {
-            this._http = this._express?.listen(this.kirin.config.apiPort, () => res(this._http)) || null;
+            this._http = this._express?.listen(this.kirin.config.api.port, () => res(this._http)) || null;
         });
 
         this._socket = new SocketServer({ transports: ["websocket"], cors: { origin: "*" } });

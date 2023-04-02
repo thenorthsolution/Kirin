@@ -17,14 +17,18 @@ export class Kirin implements RecipleModuleScript {
     public servers!: ServerManager;
     public serversDir: string = path.join(cwd, this.config.serversFolders);
 
-    readonly commands: (AnyCommandBuilder|AnyCommandData)[] = [
-        new SlashCommandBuilder()
-            .setName('server')
-            .setDescription('Manage Minecraft servers')
-            .addSubcommand(start => serverOption(start).setName('start').setDescription('Start a server'))
-            .addSubcommand(stop => serverOption(stop).setName('stop').setDescription('Stop a server'))
-            .addSubcommand(info => serverOption(info).setName('info').setDescription('Get information about a server'))
-    ];
+    readonly commands: (AnyCommandBuilder|AnyCommandData)[] = !this.config.command.enabled
+        ? [] 
+        : [
+            new SlashCommandBuilder()
+                .setName('server')
+                .setDescription('Manage Minecraft servers')
+                .setDMPermission(this.config.command.allowInDM)
+                .setRequiredMemberPermissions(this.config.command.requiredPermissions)
+                .addSubcommand(start => serverOption(start).setName('start').setDescription('Start a server'))
+                .addSubcommand(stop => serverOption(stop).setName('stop').setDescription('Stop a server'))
+                .addSubcommand(info => serverOption(info).setName('info').setDescription('Get information about a server'))
+        ];
 
     public async onStart(client: RecipleClient<false>, module: RecipleModule): Promise<boolean> {
         this.logger = client.logger?.clone({ name: 'Kirin' });
@@ -37,9 +41,10 @@ export class Kirin implements RecipleModuleScript {
     }
 
     public async onLoad(client: RecipleClient<true>, module: RecipleModule): Promise<void> {
-        await this.apiClient.start();
-
-        this.logger?.log(`Kirin is now active! http://127.0.0.1:${this.config.apiPort}`);
+        if (this.config.api.enabled) {
+            await this.apiClient.start();
+            this.logger?.log(`Kirin is now active! http://127.0.0.1:${this.config.api.port}`);
+        }
 
         await this.servers.loadServersFromDir(this.serversDir)
     }
