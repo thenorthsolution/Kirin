@@ -1,6 +1,6 @@
 import { RecipleClient, RecipleModuleScriptUnloadData } from '@reciple/client';
-import { Logger } from 'fallout-utility';
-import { AnyCommandBuilder, AnyCommandData, RecipleModule, RecipleModuleScript, SlashCommandBuilder, cwd } from 'reciple';
+import { Logger, recursiveObjectReplaceValues } from 'fallout-utility';
+import { AnyCommandBuilder, AnyCommandData, RecipleModule, RecipleModuleScript, SlashCommandBuilder, cwd, replacePlaceholders } from 'reciple';
 import { APIClient } from './Kirin/classes/APIClient.js';
 import { Config, getConfig } from './Kirin/utils/config.js';
 import { ServerManager } from './Kirin/classes/ServerManager.js';
@@ -29,6 +29,8 @@ export class Kirin implements RecipleModuleScript {
                 .addSubcommand(stop => serverOption(stop).setName('stop').setDescription('Stop a server'))
                 .addSubcommand(info => serverOption(info).setName('info').setDescription('Get information about a server'))
                 .setExecute(async ({ interaction }) => {
+                    if (!interaction.inCachedGuild()) return;
+
                     const action = interaction.options.getSubcommand() as 'start'|'stop'|'info';
                     const serverId = interaction.options.getString('server', true);
 
@@ -37,7 +39,7 @@ export class Kirin implements RecipleModuleScript {
                     const server = this.servers.cache.find(s => s.id === serverId);
 
                     if (!server) {
-                        await interaction.editReply(`❌  **|  Couldn't find server with ID of** ${inlineCode(escapeInlineCode(serverId))}`);
+                        await interaction.editReply(recursiveObjectReplaceValues(this.config.messages.serverNotFound, '{server_id}', serverId));
                         return;
                     }
 

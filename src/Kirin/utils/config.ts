@@ -1,4 +1,4 @@
-import { PermissionResolvable } from 'discord.js';
+import { BaseMessageOptions, PermissionResolvable, inlineCode } from 'discord.js';
 import { createReadFile } from 'fallout-utility';
 import { writeFileSync } from 'fs';
 import defaultsDeep from 'lodash.defaultsdeep';
@@ -17,7 +17,18 @@ export interface Config {
         ephemeralReplies: boolean;
         requiredPermissions: PermissionResolvable;
     };
+    messages: typeof messages;
 }
+
+export const messages = {
+    serverNotFound: `Couldn\'t find server id ${inlineCode('{server_id}')}`,
+    serverAlreadyStarted: `This server is already starting`,
+    serverStarting: `Server is starting...`,
+    noStartPermissions: `You don't have permissions to start this server`,
+    serverAlreadyStopped: `This server is not started`,
+    serverStopping: `Server is stopping...`,
+    noStopPermissions: `You don't have permissions to stop this server`
+};
 
 export const defaultConfig: Config = {
     serversFolders: 'config/servers/',
@@ -30,7 +41,8 @@ export const defaultConfig: Config = {
         enabled: true,
         ephemeralReplies: false,
         requiredPermissions: ['SendMessages']
-    }
+    },
+    messages: messages
 };
 
 export function getConfig(): Config {

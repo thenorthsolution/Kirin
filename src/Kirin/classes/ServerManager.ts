@@ -123,27 +123,37 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         }
     }
 
-    public async handleActionInteraction(interaction: RepliableInteraction, server: Server, action: 'start'|'stop'|'info', ephemeralReplies?: boolean): Promise<void> {
+    public async handleActionInteraction(interaction: RepliableInteraction<"cached">, server: Server, action: 'start'|'stop'|'info', ephemeralReplies?: boolean): Promise<void> {
         if (!interaction.replied && !interaction.deferred) await interaction.deferReply({ ephemeral: ephemeralReplies !== false });
 
         switch (action) {
             case 'start':
                 if (!server.isStopped()) {
-                    await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} is already starting`);
+                    await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverAlreadyStarted));
                     return;
                 }
 
+                if (!interaction.memberPermissions.has(server.permissions.start)) {
+                    await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.noStartPermissions));
+                    return;
+                };
+
                 await server.start();
-                await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} **is starting**`);
+                await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverStarting));
                 break;
             case 'stop':
                 if (server.isStopped()) {
-                    await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} is not started`);
+                    await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverAlreadyStopped));
                     return;
                 }
 
+                if (!interaction.memberPermissions.has(server.permissions.stop)) {
+                    await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.noStopPermissions));
+                    return;
+                };
+
                 await server.stop();
-                await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} **is stopping**`);
+                await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverStopping));
                 break;
             case 'info':
                 await interaction.editReply({
