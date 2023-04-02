@@ -126,8 +126,8 @@ export class Server<Ready extends boolean = boolean> {
     get status(): ServerStatus {
         if (this.process && this.lastPing?.status === 'Online') return 'Online';
         if (this.process && this.lastPing?.status === 'Offline') return 'Starting';
-        if (!this.process && this.lastPing?.status === 'Offline') return 'Offline';
-        if (!this.process && this.lastPing?.status === 'Online') return 'Unattached';
+        if (!this.isStopped() && this.lastPing?.status === 'Offline') return 'Offline';
+        if (!this.isStopped() && this.lastPing?.status === 'Online') return 'Unattached';
 
         return 'Offline';
     }
@@ -151,7 +151,7 @@ export class Server<Ready extends boolean = boolean> {
         this.logger?.warn(`Starting ${this.name}...`);
         this.logger?.debug(`Starting ${this.name}: cwd: ${this.cwd}; jar: ${this.server.jar}`);
 
-        this.process = spawn(this.server.command, [...(this.server.args ?? []), "-jar", `${this.server.jar}`], {
+        this.process = spawn(this.server.command, [...(this.server.args ?? []), "-jar", `${this.server.jar}`, '--nogui'], {
             cwd: this.cwd,
             detached: !this.server.killOnBotStop,
             killSignal: this.server.killSignal,
@@ -302,8 +302,6 @@ export class Server<Ready extends boolean = boolean> {
 
     public async ping(): Promise<PingData> {
         const oldPing = this.lastPing;
-        const oldStatus = this.status;
-
         const newPing = await pingServer({
             host: this.host,
             port: this.port,
@@ -312,10 +310,7 @@ export class Server<Ready extends boolean = boolean> {
 
         this.lastPing = newPing;
         this.manager.emit('serverPing', oldPing, newPing, this);
-
-        const newStatus = this.status;
-
-        if (oldStatus !== newStatus) await this.message?.edit(this.messageContent);
+        await this.message?.edit(this.messageContent);
 
         return newPing;
     }
