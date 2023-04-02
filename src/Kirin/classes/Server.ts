@@ -31,7 +31,7 @@ export interface ServerData {
         offline: BaseMessageOptions;
         online: BaseMessageOptions;
         starting: BaseMessageOptions;
-        stopping: BaseMessageOptions;
+        unattached: BaseMessageOptions;
     };
     components: {
         start: InteractionButtonComponentData;
@@ -47,7 +47,7 @@ export interface ServerData {
     };
 }
 
-export type ServerStatus = 'Online'|'Offline'|'Starting'|'Stopping';
+export type ServerStatus = 'Online'|'Offline'|'Starting'|'Unattached';
 
 export class Server<Ready extends boolean = boolean> {
     readonly id: string = randomBytes(16).toString('hex');
@@ -72,9 +72,21 @@ export class Server<Ready extends boolean = boolean> {
     get port() { return Number(this.options.ip.split(':')[1] ?? 25565); }
     get file() { return this.options.file; }
     get server() { return this.options.server; }
-    get messages() { return this.options.messages; }
-    get components() { return { start: new ButtonBuilder(this.options.components.start), stop: new ButtonBuilder(this.options.components.stop) }; }
-    get permissions() { return { start: new PermissionsBitField(this.options.permissions.start), stop: new PermissionsBitField(this.options.permissions.stop) }; }
+    get messages() { return this.replacePlaceholders(this.options.messages); }
+
+    get components() {
+        return {
+            start: new ButtonBuilder(this.replacePlaceholders(this.options.components.start)).setCustomId(`kirin-start-${this.id}`),
+            stop: new ButtonBuilder(this.replacePlaceholders(this.options.components.stop)).setCustomId(`kirin-stop-${this.id}`)
+        };
+    }
+
+    get permissions() {
+        return {
+            start: new PermissionsBitField(this.options.permissions.start),
+            stop: new PermissionsBitField(this.options.permissions.stop)
+        };
+    }
 
     get messageContent() {
         let content: BaseMessageOptions = { embeds: [], components: [] };
@@ -89,18 +101,20 @@ export class Server<Ready extends boolean = boolean> {
             case 'Starting':
                 content = this.messages.starting;
                 break;
-            case 'Stopping':
-                content = this.messages.stopping;
+            case 'Unattached':
+                content = this.messages.unattached;
                 break;
         }
 
         if (!content) content = { content: `Server status: ${inlineCode(this.status)}` };
 
-        content.components = this.status !== 'Starting' && this.status !== 'Stopping'
+        content.components = this.status !== 'Starting' && this.status !== 'Unattached'
             ? [
                 new ActionRowBuilder<MessageActionRowComponentBuilder>({
                     components: [
-                        recursiveObjectReplaceValues(this.status === 'Online' ? this.components.stop.toJSON() : this.components.start.toJSON(), '{server_id}', this.id)
+                        this.status === 'Online'
+                            ? this.components.stop.toJSON() 
+                            : this.components.start.toJSON()
                     ]
                 })]
             : [];
@@ -113,7 +127,7 @@ export class Server<Ready extends boolean = boolean> {
         if (this.process && this.lastPing?.status === 'Online') return 'Online';
         if (this.process && this.lastPing?.status === 'Offline') return 'Starting';
         if (!this.process && this.lastPing?.status === 'Offline') return 'Offline';
-        if (!this.process && this.lastPing?.status === 'Online') return 'Stopping';
+        if (!this.process && this.lastPing?.status === 'Online') return 'Unattached';
 
         return 'Offline';
     }
@@ -337,6 +351,26 @@ export class Server<Ready extends boolean = boolean> {
             ...(serverData ? { id: this.id, status: this.status } : {}),
             ...this.options
         };
+    }
+
+    public replacePlaceholders<T extends string|object>(data: T, customPlaceholders?: Record<string, string>): T {
+        return recursiveObjectReplaceValues(
+            data,
+            [
+                '{server_id}',
+                '{server_name}',
+                '{server_description}',
+                '{server_status}',
+                ...Object.keys(customPlaceholders ?? {})
+            ],
+            [
+                this.id,
+                this.name,
+                this.description || '',
+                this.status,
+                ...Object.values(customPlaceholders ?? {})
+            ]
+        );
     }
 
     public static async from(file: string, kirin: Kirin, cache: boolean = true): Promise<Server<true>> {

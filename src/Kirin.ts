@@ -24,13 +24,12 @@ export class Kirin implements RecipleModuleScript {
             new SlashCommandBuilder()
                 .setName('server')
                 .setDescription('Manage Minecraft servers')
-                .setDMPermission(this.config.command.allowInDM)
                 .setRequiredMemberPermissions(this.config.command.requiredPermissions)
                 .addSubcommand(start => serverOption(start).setName('start').setDescription('Start a server'))
                 .addSubcommand(stop => serverOption(stop).setName('stop').setDescription('Stop a server'))
                 .addSubcommand(info => serverOption(info).setName('info').setDescription('Get information about a server'))
                 .setExecute(async ({ interaction }) => {
-                    const command = interaction.options.getSubcommand() as 'start'|'stop'|'info';
+                    const action = interaction.options.getSubcommand() as 'start'|'stop'|'info';
                     const serverId = interaction.options.getString('server', true);
 
                     await interaction.deferReply({ ephemeral: this.config.command.ephemeralReplies })
@@ -42,46 +41,7 @@ export class Kirin implements RecipleModuleScript {
                         return;
                     }
 
-                    switch (command) {
-                        case 'start':
-                            await server.start();
-                            await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} **is starting**`);
-                            break;
-                        case 'stop':
-                            await server.stop();
-                            await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} **is stopping**`);
-                            break
-                        case 'info':
-                            await interaction.editReply({
-                                embeds: [
-                                    new EmbedBuilder()
-                                        .setTitle(server.name)
-                                        .setDescription(server.description || null)
-                                        .setColor(server.status === 'Online' ? 'Green' : 'Grey')
-                                        .setFields(
-                                            {
-                                                name: 'Last Updated',
-                                                value: server.lastPing ? time(server.lastPing.pingedAt, 'R') : '*Never*',
-                                                inline: true
-                                            },
-                                            {
-                                                name: 'Version',
-                                                value: server.lastPing?.version || '*Unknown*',
-                                                inline: true
-                                            },
-                                            {
-                                                name: 'Status',
-                                                value: server.status,
-                                                inline: true
-                                            }
-                                        )
-                                        .setFooter({ text: `ID: ${server.id}` })
-                                        .setTimestamp()
-                                ]
-                            });
-
-                            break;
-                    }
+                    await this.servers.handleActionInteraction(interaction, server, action, this.config.command.ephemeralReplies);
                 })
         ];
 

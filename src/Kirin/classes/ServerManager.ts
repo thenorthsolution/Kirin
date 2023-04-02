@@ -1,4 +1,4 @@
-import { Channel, Collection, Guild, Interaction, Message } from 'discord.js';
+import { Channel, Collection, EmbedBuilder, Guild, Interaction, Message, RepliableInteraction, escapeInlineCode, inlineCode, time } from 'discord.js';
 import { Server, ServerData, ServerStatus } from './Server.js';
 import { Kirin } from '../../Kirin.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
@@ -98,16 +98,83 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
     }
 
     private async _onInteractionCreate(interaction: Interaction): Promise<void> {
-        if (!interaction.inCachedGuild() || !interaction.isAutocomplete()) return;
+        if (!interaction.inCachedGuild()) return;
 
-        const option = interaction.options.getFocused(true);
-        const name = option.name;
-        const value = option.value.toLowerCase();
+        if (interaction.isButton()) {
+            const [kirin, action, serverId] = interaction.customId.split('-') as ['kirin', 'start'|'stop', string];
+            if (!['start', 'stop'].includes(action)) return;
 
-        if (name !== 'server') return;
+            const server = this.cache.get(serverId);
+            if (!server) return;
 
-        const servers = this.cache.filter(s => s.name.toLowerCase() === value || s.name.toLowerCase().includes(value) || s.description?.toLowerCase()?.includes(value) || s.ip.includes(value));
+            await this.handleActionInteraction(interaction, server, action, true);
+        }
 
-        await interaction.respond(servers.map(s => ({ name: s.name, value: s.id }))).catch(() => {});
+        if (interaction.isAutocomplete()) {
+            const option = interaction.options.getFocused(true);
+            const name = option.name;
+            const value = option.value.toLowerCase();
+
+            if (name !== 'server') return;
+
+            const servers = this.cache.filter(s => s.name.toLowerCase() === value || s.name.toLowerCase().includes(value) || s.description?.toLowerCase()?.includes(value) || s.ip.includes(value));
+
+            await interaction.respond(servers.map(s => ({ name: s.name, value: s.id }))).catch(() => {});
+        }
+    }
+
+    public async handleActionInteraction(interaction: RepliableInteraction, server: Server, action: 'start'|'stop'|'info', ephemeralReplies?: boolean): Promise<void> {
+        if (!interaction.replied && !interaction.deferred) await interaction.deferReply({ ephemeral: ephemeralReplies !== false });
+
+        switch (action) {
+            case 'start':
+                if (!server.isStopped()) {
+                    await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} is already starting`);
+                    return;
+                }
+
+                await server.start();
+                await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} **is starting**`);
+                break;
+            case 'stop':
+                if (server.isStopped()) {
+                    await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} is not started`);
+                    return;
+                }
+
+                await server.stop();
+                await interaction.editReply(`${inlineCode(escapeInlineCode(server.name))} **is stopping**`);
+                break;
+            case 'info':
+                await interaction.editReply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setTitle(server.name)
+                            .setDescription(server.description || null)
+                            .setColor(server.status === 'Online' ? 'Green' : 'Grey')
+                            .setFields(
+                                {
+                                    name: 'Last Updated',
+                                    value: server.lastPing ? time(server.lastPing.pingedAt, 'R') : '*Never*',
+                                    inline: true
+                                },
+                                {
+                                    name: 'Version',
+                                    value: server.lastPing?.version || '*Unknown*',
+                                    inline: true
+                                },
+                                {
+                                    name: 'Status',
+                                    value: server.status,
+                                    inline: true
+                                }
+                            )
+                            .setFooter({ text: `ID: ${server.id}` })
+                            .setTimestamp()
+                    ]
+                });
+
+                break;
+        }
     }
 }

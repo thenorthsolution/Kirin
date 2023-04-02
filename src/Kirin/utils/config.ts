@@ -14,7 +14,6 @@ export interface Config {
     };
     command: {
         enabled: boolean;
-        allowInDM: boolean;
         ephemeralReplies: boolean;
         requiredPermissions: PermissionResolvable;
     };
@@ -29,7 +28,6 @@ export const defaultConfig: Config = {
     },
     command: {
         enabled: true,
-        allowInDM: false,
         ephemeralReplies: false,
         requiredPermissions: ['SendMessages']
     }
