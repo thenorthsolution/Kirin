@@ -1,4 +1,4 @@
-import { Awaitable, Channel, Collection, Guild, Message } from 'discord.js';
+import { Channel, Collection, Guild, Message } from 'discord.js';
 import { Server, ServerData, ServerStatus } from './Server.js';
 import { Kirin } from '../../Kirin.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';

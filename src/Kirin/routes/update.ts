@@ -5,7 +5,7 @@ import type { PartialDeep } from 'type-fest';
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
 
-    api.express.patch(apiPath + '/edit/:serverId', async (req, res) => {
+    api.express.patch(apiPath + '/update/:serverId', async (req, res) => {
         if (!api.authenticate(req)) return api.errorResponse(res, 401, 'Invalid auth');
 
         try {

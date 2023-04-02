@@ -38,14 +38,15 @@ export class APIClient<Ready extends boolean = boolean> {
         this._express.use(cors({ origin: "*" }));
 
         await this.loadRoutes();
-        this._express.use(recursiveDefaults<any>(await import(('../../../dashboard/build/handler.js'))).handler);
 
         await new Promise(res => {
             this._http = this._express?.listen(this.kirin.config.apiPort, () => res(this._http)) || null;
         });
 
-        this._socket = new SocketServer({ transports: ["websocket"] });
+        this._socket = new SocketServer({ transports: ["websocket"], cors: { origin: "*" } });
         this._socket?.listen(this._http!);
+
+        this._socket.sockets.on('connect', socket => this.logger?.log(`Socket connected: ${socket.id}`));
 
         if (!this.isReady()) throw new Error('Unable to create API client');
         return this;
