@@ -7,7 +7,7 @@ import path from 'path';
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
 
-    api.express.post(apiPath + '/create', (req, res) => api
+    api.express.post(apiPath + '/', (req, res) => api
         .createRequestHandler(req, res)
         .handle(async requestHandler => {
             try {

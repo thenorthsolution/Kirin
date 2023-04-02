@@ -12,7 +12,7 @@ export class RequestHandler {
     constructor(readonly request: Request, readonly response: Response, readonly apiClient: APIClient, readonly options?: RequestHandlerOptions) {}
 
     public authorize(): boolean {
-        if (!this.apiClient.password || this.request.get('Authorization') === this.apiClient.password) return true;
+        if (this.isAuthorized()) return true;
 
         this.sendAPIErrorResponse(401, { error: 'InvalidAuth' });
         return false;
@@ -31,5 +31,9 @@ export class RequestHandler {
         if (this.options?.authorize !== false && !this.authorize()) return;
 
         await Promise.resolve(handler(this));
+    }
+
+    public isAuthorized(): boolean {
+        return !this.apiClient.password || this.request.get('Authorization') === this.apiClient.password
     }
 }

@@ -1,10 +1,15 @@
 import { ServerData, ServerStatus } from '../classes/Server.js';
 
-export type APIResponse = APIPingResponse|APIServerResponse|APIServersResponse;
+export type APIResponse = APIPingResponse|APIAuthorizeResponse|APIServerResponse|APIServersResponse;
 
 export interface APIPingResponse {
     type: 'Ping';
     message: string|null;
+}
+
+export interface APIAuthorizeResponse {
+    type: 'Authorize';
+    authorized: boolean;
 }
 
 export interface APIServerResponse<WithIdStatus extends boolean = true> {

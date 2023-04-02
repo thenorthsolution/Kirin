@@ -5,7 +5,7 @@ import type { PartialDeep } from 'type-fest';
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
 
-    api.express.patch(apiPath + '/update/:serverId', async (req, res) => api
+    api.express.patch(apiPath + '/:serverId', async (req, res) => api
         .createRequestHandler(req, res)
         .handle(async requestHandler => {
             try {

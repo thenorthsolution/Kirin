@@ -3,7 +3,7 @@ import { APIClient } from '../classes/APIClient.js';
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
 
-    api.express.delete(apiPath + '/delete/:serverId/:deleteJson?', (req, res) => api
+    api.express.delete(apiPath + '/:serverId/:deleteJson?', (req, res) => api
         .createRequestHandler(req, res)
         .handle(async requestHandler => {
             const serverId = req.params.serverId;
