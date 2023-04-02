@@ -5,22 +5,23 @@ import type { PartialDeep } from 'type-fest';
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
 
-    api.express.patch(apiPath + '/update/:serverId', async (req, res) => {
-        if (!api.authenticate(req)) return api.errorResponse(res, 401, 'Invalid auth');
+    api.express.patch(apiPath + '/update/:serverId', async (req, res) => api
+        .createRequestHandler(req, res)
+        .handle(async requestHandler => {
+            try {
+                const data: PartialDeep<ServerData> = JSON.parse(req.body?.data || '{}');
 
-        try {
-            const data: PartialDeep<ServerData> = JSON.parse(req.body?.data || '{}');
+                const serverId = req.params.serverId;
+                const server = api.kirin.servers.cache.get(serverId);
 
-            const serverId = req.params.serverId;
-            const server = api.kirin.servers.cache.get(serverId);
+                if (!server) return requestHandler.sendAPIErrorResponse(404, { error: 'ServerNotFound', id: serverId });
 
-            if (!server) return api.errorResponse(res, 404, 'Server not found');
+                await server.update(data);
 
-            await server.update(data);
-
-            res.send(server.toJSON());
-        } catch (err) {
-            return api.errorResponse(res, 400, (err as Error).message);
-        }
-    });
+                requestHandler.sendAPIResponse({ type: 'ServerUpdate', server: server.toJSON() });
+            } catch (err) {
+                return requestHandler.sendAPIErrorResponse(400, { error: 'ServerUpdateFailed', message: err instanceof Error ? err.message : String(err) });
+            }
+        })
+    );
 }

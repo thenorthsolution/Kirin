@@ -3,18 +3,19 @@ import { APIClient } from '../classes/APIClient.js';
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
 
-    api.express.delete(apiPath + '/delete/:serverId/:deleteJson?', async (req, res) => {
-        if (!api.authenticate(req)) return api.errorResponse(res, 401, 'Invalid auth');
+    api.express.delete(apiPath + '/delete/:serverId/:deleteJson?', (req, res) => api
+        .createRequestHandler(req, res)
+        .handle(async requestHandler => {
+            const serverId = req.params.serverId;
+            const deleteJson = req.params.deleteJson === 'true';
 
-        const serverId = req.params.serverId;
-        const deleteJson = req.params.deleteJson === 'true';
+            const server = api.kirin.servers.cache.get(serverId);
 
-        const server = api.kirin.servers.cache.get(serverId);
+            if (!server) return requestHandler.sendAPIErrorResponse(404, { error: 'ServerNotFound', id: serverId });
 
-        if (!server) return api.errorResponse(res, 404, 'Server not found');
+            await server.delete(deleteJson);
 
-        await server.delete(deleteJson);
-
-        res.send(server.toJSON());
-    });
+            requestHandler.sendAPIResponse({ type: 'ServerDelete', server: server.toJSON() });
+        })
+    );
 }

@@ -7,28 +7,30 @@ import path from 'path';
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
 
-    api.express.post(apiPath + '/create', async (req, res) => {
-        if (!api.authenticate(req)) return api.errorResponse(res, 401, 'Invalid auth');
-        try {
-            const data: ServerData = JSON.parse(req.body?.data || '{}');
+    api.express.post(apiPath + '/create', (req, res) => api
+        .createRequestHandler(req, res)
+        .handle(async requestHandler => {
+            try {
+                const data: ServerData = JSON.parse(req.body?.data || '{}');
 
-            Server.validateServerData(data);
+                Server.validateServerData(data);
 
-            const file = path.join(api.kirin.serversDir, crypto.randomBytes(10).toString('base64url') + '.json');
+                const file = path.join(api.kirin.serversDir, crypto.randomBytes(10).toString('base64url') + '.json');
 
-            mkdirSync(api.kirin.serversDir, { recursive: true });
-            writeFileSync(file, JSON.stringify(data, null, 2));
+                mkdirSync(api.kirin.serversDir, { recursive: true });
+                writeFileSync(file, JSON.stringify(data, null, 2));
 
-            const server = await Server.from(file, api.kirin, true).catch(() => null);
+                const server = await Server.from(file, api.kirin, true).catch(() => null);
 
-            if (!server) {
-                rmSync(file, { force: true });
-                return api.errorResponse(res, 400, 'Unable to resolve server data');
+                if (!server) {
+                    rmSync(file, { force: true });
+                    return requestHandler.sendAPIErrorResponse(400, { error: 'ServerCreateFailed', message: 'Unable to resolve server data' });
+                }
+
+                res.send(server.toJSON());
+            } catch (err) {
+                return requestHandler.sendAPIErrorResponse(400, { error: 'ServerCreateFailed', message: err instanceof Error ? err.message : String(err) });
             }
-
-            res.send(server.toJSON());
-        } catch (err) {
-            return api.errorResponse(res, 400, (err as Error).message);
-        }
-    });
+        })
+    );
 }

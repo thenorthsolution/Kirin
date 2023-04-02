@@ -10,6 +10,7 @@ import path from 'path';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import { RequestHandler, RequestHandlerOptions } from './RequestHandler.js';
 
 export class APIClient<Ready extends boolean = boolean> {
     private _express: Express = express();
@@ -69,19 +70,11 @@ export class APIClient<Ready extends boolean = boolean> {
         }
     }
 
+    public createRequestHandler(request: Request, response: Response, options?: RequestHandlerOptions): RequestHandler {
+        return new RequestHandler(request, response, this, options);
+    }
+
     public isReady(): this is APIClient<true> {
         return this._express !== null && this._http !== null && this.socket !== null;
-    }
-
-    public authenticate(req: Request): boolean {
-        if (!this.password) return true;
-
-        const password = req.get('password');
-
-        return this.password === password;
-    }
-
-    public errorResponse(res: Response, code: number, err: string): void {
-        res.status(code).send({ error: err });
     }
 }

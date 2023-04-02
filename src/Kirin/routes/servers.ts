@@ -3,22 +3,24 @@ import { APIClient } from '../classes/APIClient.js';
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
 
-    api.express.get(apiPath, async (req, res) => {
-        if (!api.authenticate(req)) return api.errorResponse(res, 401, 'Invalid auth');
+    api.express.get(apiPath, async (req, res) => api
+        .createRequestHandler(req, res)
+        .handle(async requestHandler => {
+            const servers = api.kirin.servers.cache.map(s => s.toJSON());
 
-        const servers = api.kirin.servers.cache.map(s => s.toJSON());
+            requestHandler.sendAPIResponse({ type: 'Servers', servers });
+        })
+    );
 
-        res.send(servers);
-    });
+    api.express.get(apiPath + '/:serverId', async (req, res) => api
+        .createRequestHandler(req, res)
+        .handle(async requestHandler => {
+            const serverId = req.params.serverId;
+            const server = api.kirin.servers.cache.get(serverId);
 
-    api.express.get(apiPath + '/:serverId', async (req, res) => {
-        if (!api.authenticate(req)) return api.errorResponse(res, 401, 'Invalid auth');
+            if (!server) return requestHandler.sendAPIErrorResponse(404, { error: 'ServerNotFound', id: serverId });
 
-        const serverId = req.params.serverId;
-        const server = api.kirin.servers.cache.get(serverId);
-
-        if (!server) return api.errorResponse(res, 404, 'Server not found');
-
-        res.send(server.toJSON())
-    });
+            requestHandler.sendAPIResponse({ type: 'Server', server: server.toJSON() })
+        })
+    );
 }
