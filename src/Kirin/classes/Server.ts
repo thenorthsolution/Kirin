@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ChannelType, Guild, GuildTextBasedChannel, If, InteractionButtonComponentData, Message, MessageActionRowComponentBuilder, PermissionResolvable, PermissionsBitField, StageChannel, TextBasedChannel, inlineCode } from 'discord.js';
+import { APIButtonComponentBase, APIButtonComponentWithCustomId, ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ButtonStyle, ChannelType, Guild, GuildTextBasedChannel, If, InteractionButtonComponentData, Message, MessageActionRowComponentBuilder, PermissionResolvable, PermissionsBitField, StageChannel, TextBasedChannel, inlineCode } from 'discord.js';
 import { Kirin } from '../../Kirin.js';
 import { ServerManager } from './ServerManager.js';
 import { readFileSync, rmSync, writeFileSync } from 'fs';
@@ -34,8 +34,8 @@ export interface ServerData {
         unattached: BaseMessageOptions;
     };
     components: {
-        start: InteractionButtonComponentData;
-        stop: InteractionButtonComponentData;
+        start: APIButtonComponentBase<ButtonStyle.Primary|ButtonStyle.Secondary|ButtonStyle.Success|ButtonStyle.Danger>;
+        stop: APIButtonComponentBase<ButtonStyle.Primary|ButtonStyle.Secondary|ButtonStyle.Success|ButtonStyle.Danger>;
     };
     permissions: {
         start: PermissionResolvable;
@@ -149,9 +149,9 @@ export class Server<Ready extends boolean = boolean> {
         if (!this.isStopped()) throw new Error('Server process is already started');
 
         this.logger?.warn(`Starting ${this.name}...`);
-        this.logger?.debug(`Starting ${this.name}: Cwd: ${this.cwd}; Jar: ${this.server.jar}`);
+        this.logger?.debug(`Starting ${this.name}: cwd: ${this.cwd}; jar: ${this.server.jar}`);
 
-        this.process = spawn(this.server.command, ["-jar", this.server.jar, ...(this.server.args ?? [])], {
+        this.process = spawn(this.server.command, [...(this.server.args ?? []), "-jar", `${this.server.jar}`], {
             cwd: this.cwd,
             detached: !this.server.killOnBotStop,
             killSignal: this.server.killSignal,
@@ -408,7 +408,7 @@ export class Server<Ready extends boolean = boolean> {
 
         if (!obj.messages) throw new Error('Property "messages" is required');
 
-        const missingMessages = ['offline', 'online', 'starting', 'stopping'].filter(m => !Object.keys(obj.messages).includes(m));
+        const missingMessages = ['offline', 'online', 'starting', 'unattached'].filter(m => !Object.keys(obj.messages).includes(m));
         if (missingMessages.length) throw new Error(`Missing server messages: ${missingMessages.join(' ')}`);
 
         if (!obj.permissions) throw new Error('Property "permissions" is required');

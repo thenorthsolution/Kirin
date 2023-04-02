@@ -6,7 +6,6 @@ import { Config, getConfig } from './Kirin/utils/config.js';
 import { ServerManager } from './Kirin/classes/ServerManager.js';
 import path from 'path';
 import { serverOption } from './Kirin/utils/commandOption.js';
-import { EmbedBuilder, escapeInlineCode, inlineCode, time } from 'discord.js';
 
 export class Kirin implements RecipleModuleScript {
     readonly versions: string = '^7';
