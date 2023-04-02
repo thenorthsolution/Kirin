@@ -1,12 +1,12 @@
-import { randomUUID } from 'crypto';
-import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ChannelType, Guild, GuildTextBasedChannel, If, InteractionButtonComponentData, Message, MessageActionRowComponentBuilder, PermissionResolvable, PermissionsBitField, StageChannel, TextBasedChannel } from 'discord.js';
+import { randomBytes } from 'crypto';
+import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ChannelType, Guild, GuildTextBasedChannel, If, InteractionButtonComponentData, Message, MessageActionRowComponentBuilder, PermissionResolvable, PermissionsBitField, StageChannel, TextBasedChannel, inlineCode } from 'discord.js';
 import { Kirin } from '../../Kirin.js';
 import { ServerManager } from './ServerManager.js';
 import { readFileSync, rmSync, writeFileSync } from 'fs';
 import { ChildProcess, spawn } from 'child_process';
 import { PingData, pingServer } from '../utils/ping.js';
 import { resolveFromCachedManager } from '../utils/managers.js';
-import { Logger } from 'fallout-utility';
+import { Logger, recursiveObjectReplaceValues } from 'fallout-utility';
 import path from 'path';
 import { cwd } from 'reciple';
 import { PartialDeep } from 'type-fest';
@@ -50,7 +50,7 @@ export interface ServerData {
 export type ServerStatus = 'Online'|'Offline'|'Starting'|'Stopping';
 
 export class Server<Ready extends boolean = boolean> {
-    readonly id: string = randomUUID();
+    readonly id: string = randomBytes(16).toString('hex');
     readonly kirin: Kirin;
     readonly manager: ServerManager;
     readonly logger?: Logger;
@@ -77,7 +77,7 @@ export class Server<Ready extends boolean = boolean> {
     get permissions() { return { start: new PermissionsBitField(this.options.permissions.start), stop: new PermissionsBitField(this.options.permissions.stop) }; }
 
     get messageContent() {
-        let content: BaseMessageOptions;
+        let content: BaseMessageOptions = { embeds: [], components: [] };
 
         switch (this.status) {
             case 'Offline':
@@ -94,10 +94,15 @@ export class Server<Ready extends boolean = boolean> {
                 break;
         }
 
+        if (!content) content = { content: `Server status: ${inlineCode(this.status)}` };
+
         content.components = this.status !== 'Starting' && this.status !== 'Stopping'
-            ? this.status === 'Online'
-                ? [new ActionRowBuilder<MessageActionRowComponentBuilder>(this.components.stop.toJSON())]
-                : [new ActionRowBuilder<MessageActionRowComponentBuilder>(this.components.start.toJSON())]
+            ? [
+                new ActionRowBuilder<MessageActionRowComponentBuilder>({
+                    components: [
+                        recursiveObjectReplaceValues(this.status === 'Online' ? this.components.stop.toJSON() : this.components.start.toJSON(), '{server_id}', this.id)
+                    ]
+                })]
             : [];
 
         return content;
@@ -137,8 +142,8 @@ export class Server<Ready extends boolean = boolean> {
             detached: !this.server.killOnBotStop,
             killSignal: this.server.killSignal,
             env: process.env,
-            shell: true,
-            stdio: [],
+            // shell: true,
+            stdio: []
         });
 
         this.process.stdout?.on('data', (msg: Buffer) => this.manager.emit('serverProcessStdout', msg.toString('utf-8').trim(), this));
@@ -168,9 +173,9 @@ export class Server<Ready extends boolean = boolean> {
         if (!this.process) throw new Error('Server is already stopped');
         if (this.isStopped() || !this.process.pid) return true;
 
-        this.logger?.warn(`Stopping ${this.name}...`);
+        this.logger?.warn(`Stopping ${this.name} (PID: ${this.process.pid})`);
 
-        const kill = process.kill(this.process.pid!, this.server.killSignal);
+        const kill = process.kill(this.process.pid, this.server.killSignal);
 
         if (!kill) {
             if (this.isStopped()) {
@@ -210,7 +215,11 @@ export class Server<Ready extends boolean = boolean> {
             const message = await resolveFromCachedManager(this.messageId, this.channel!.messages);
             if (message.author.id !== this.kirin.client.user?.id) throw new Error(`Message is not authored by ${this.kirin.client.user?.tag}`);
 
+            await message.edit(this.messageContent);
+
             this._message = message;
+        } else if (this.channelId && !this.messageId) {
+            this.createMessage({ channel: this.channel! });
         }
 
         await this.ping();
@@ -279,14 +288,21 @@ export class Server<Ready extends boolean = boolean> {
 
     public async ping(): Promise<PingData> {
         const oldPing = this.lastPing;
+        const oldStatus = this.status;
+
         const newPing = await pingServer({
             host: this.host,
             port: this.port,
             timeout: this.options.ping.pingTimeout
         });
 
-        this.manager.emit('serverPing', oldPing, newPing, this);
         this.lastPing = newPing;
+        this.manager.emit('serverPing', oldPing, newPing, this);
+
+        const newStatus = this.status;
+
+        if (oldStatus !== newStatus) await this.message?.edit(this.messageContent);
+
         return newPing;
     }
 
