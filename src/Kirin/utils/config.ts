@@ -1,3 +1,4 @@
+import { CorsOptions, CorsOptionsDelegate } from 'cors';
 import { BaseMessageOptions, PermissionResolvable, inlineCode } from 'discord.js';
 import { createReadFile } from 'fallout-utility';
 import { writeFileSync } from 'fs';
@@ -11,6 +12,7 @@ export interface Config {
         enabled: boolean;
         port: number;
         password: string|null;
+        cors: CorsOptions|CorsOptionsDelegate;
     };
     command: {
         enabled: boolean;
@@ -38,7 +40,8 @@ export const defaultConfig: Config = {
     api: {
         enabled: false,
         port: 55667,
-        password: null
+        password: null,
+        cors: { origin: '*' }
     },
     command: {
         enabled: true,

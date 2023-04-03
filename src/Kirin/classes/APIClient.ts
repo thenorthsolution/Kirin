@@ -37,7 +37,7 @@ export class APIClient<Ready extends boolean = boolean> {
 
         this._express.use(bodyParser.urlencoded({ extended: false }));
         this._express.use(bodyParser.json());
-        this._express.use(cors({ origin: "*" }));
+        this._express.use(cors(this.kirin.config.api.cors));
 
         await this.loadRoutes();
 
