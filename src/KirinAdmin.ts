@@ -155,7 +155,7 @@ export class KirinAdmin implements RecipleModuleScript {
                 jar: modalInteraction.fields.getTextInputValue('jar'),
                 args: modalInteraction.fields.getTextInputValue('args').split(/(\s+)/).filter(Boolean),
                 killOnBotStop: false,
-                killSignal: 'SIGHUP'
+                killSignal: 'SIGINT'
             },
             messages: {
                 starting: { content: ' ', embeds: [new EmbedBuilder().setAuthor({ name: 'Server is starting' }).setTitle('{server_name}').setDescription('{server_description}').setColor('Blue').toJSON()] },
