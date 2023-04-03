@@ -28,7 +28,9 @@ export const messages = {
     serverAlreadyStopped: `This server is not started`,
     serverStopping: `Server is stopping...`,
     noStopPermissions: `You don't have permissions to stop this server`,
-    serverIsOffline: `Server is offline`
+    serverIsOffline: `Server is offline`,
+    serverDeleted: `Server has been deleted`,
+    serverIsOnline: `Stop the server to continue`
 };
 
 export const defaultConfig: Config = {

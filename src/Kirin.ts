@@ -1,6 +1,5 @@
-import { RecipleClient, RecipleModuleScriptUnloadData } from '@reciple/client';
+import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModule, RecipleModuleScriptUnloadData, RecipleModuleScript, SlashCommandBuilder, cwd } from 'reciple';
 import { Logger, recursiveObjectReplaceValues } from 'fallout-utility';
-import { AnyCommandBuilder, AnyCommandData, RecipleModule, RecipleModuleScript, SlashCommandBuilder, cwd, replacePlaceholders } from 'reciple';
 import { APIClient } from './Kirin/classes/APIClient.js';
 import { Config, getConfig } from './Kirin/utils/config.js';
 import { ServerManager } from './Kirin/classes/ServerManager.js';

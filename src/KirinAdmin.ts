@@ -50,6 +50,9 @@ export class KirinAdmin implements RecipleModuleScript {
                 )
                 .setExecute(async ({ interaction }) => {
                     const action = interaction.options.getSubcommand() as 'create'|'delete'|'message';
+                    const serverId = interaction.options.getString('server') || '';
+                    const server = serverId ? this.kirin.servers.cache.get(serverId) : null;
+
 
                     switch (action) {
                         case 'create':
@@ -58,13 +61,24 @@ export class KirinAdmin implements RecipleModuleScript {
                         case 'delete':
                             await interaction.deferReply({ ephemeral: true });
 
+                            if (!server) {
+                                await interaction.editReply(recursiveObjectReplaceValues(this.kirin.config.messages.serverNotFound, '{server_id}', serverId));
+                                return;
+                            }
+
+                            if (!server.isStopped()) {
+                                await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverIsOnline));
+                                return;
+                            }
+
+                            await server.delete(true);
+                            await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverDeleted));
+
                             break;
                         case 'message':
                             await interaction.deferReply({ ephemeral: true });
 
                             const message = interaction.options.getString('message', true);
-                            const serverId = interaction.options.getString('server', true);
-                            const server = this.kirin.servers.cache.get(serverId);
 
                             if (!server) {
                                 await interaction.editReply(recursiveObjectReplaceValues(this.kirin.config.messages.serverNotFound, '{server_id}', serverId));
