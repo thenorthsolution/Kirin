@@ -44,6 +44,7 @@ export class Kirin implements RecipleModuleScript {
 
                     await this.servers.handleActionInteraction(interaction, server, action, this.config.command.ephemeralReplies);
                 })
+                .setHalt(async halt => true)
         ];
 
     public async onStart(client: RecipleClient<false>, module: RecipleModule): Promise<boolean> {

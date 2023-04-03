@@ -129,7 +129,7 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
             const server = this.cache.get(serverId);
             if (!server) return;
 
-            await this.handleActionInteraction(interaction, server, action, true);
+            await this.handleActionInteraction(interaction, server, action, true).catch(() => {});
         }
 
         if (interaction.isAutocomplete()) {
