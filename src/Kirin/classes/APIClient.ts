@@ -48,9 +48,16 @@ export class APIClient<Ready extends boolean = boolean> {
         this._socket = new SocketServer({ transports: ["websocket"], cors: { origin: "*" } });
         this._socket?.listen(this._http!);
 
+        this._socket.use((socket, next) => {
+            if (this.kirin.config.api.password === null) return next();
+            if (this.kirin.config.api.password === socket.handshake.auth.Authorization) return next();
+
+            return next(new Error('Invalid Authentication'));
+        });
+
         this._socket.sockets.on('connection', socket => {
             this.logger?.debug(`Socket connected: ${socket.id}`);
-            
+
             socket.once('disconnect', () => this.logger?.debug(`Socket disconnected: ${socket.id}`));
         });
 

@@ -34,6 +34,6 @@ export class RequestHandler {
     }
 
     public isAuthorized(): boolean {
-        return !this.apiClient.password || this.request.get('Authorization') === this.apiClient.password
+        return this.apiClient.password === null || this.request.get('Authorization') === this.apiClient.password
     }
 }
