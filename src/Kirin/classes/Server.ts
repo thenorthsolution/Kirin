@@ -253,6 +253,8 @@ export class Server<Ready extends boolean = boolean> {
         this.manager.emit('serverDelete', this as Server);
         this.manager.cache.delete(this.id);
 
+        if (deleteJsonFile && this.message) await this.message.delete().catch(() => null);
+
         this._deleted = true;
 
         if (deleteJsonFile && this.file) rmSync(this.file, { force: true, recursive: true });
