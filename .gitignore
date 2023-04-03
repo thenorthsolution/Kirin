@@ -132,12 +132,4 @@ dist
 # Output files
 modules
 config
-
-# Dashboard
-.DS_Store
-build
-.svelte-kit
-package
-!.env.example
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
+reciple.yml
