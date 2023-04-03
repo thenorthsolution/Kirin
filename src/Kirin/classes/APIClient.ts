@@ -11,14 +11,15 @@ import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { RequestHandler, RequestHandlerOptions } from './RequestHandler.js';
+import { SocketEvents } from '../types/SocketEvents.js';
 
 export class APIClient<Ready extends boolean = boolean> {
     private _express: Express = express();
-    private _socket: SocketServer|null = null;
+    private _socket: SocketServer<SocketEvents>|null = null;
     private _http: HttpServer|null = null;
 
     get express() { return this._express; }
-    get socket() { return this._socket as If<Ready, SocketServer> }
+    get socket() { return this._socket as If<Ready, SocketServer<SocketEvents>> }
     get http() { return this._http as If<Ready, HttpServer>; }
 
     get password() { return this.kirin.config.api.password || null; }
@@ -47,7 +48,11 @@ export class APIClient<Ready extends boolean = boolean> {
         this._socket = new SocketServer({ transports: ["websocket"], cors: { origin: "*" } });
         this._socket?.listen(this._http!);
 
-        this._socket.sockets.on('connect', socket => this.logger?.log(`Socket connected: ${socket.id}`));
+        this._socket.sockets.on('connection', socket => {
+            this.logger?.debug(`Socket connected: ${socket.id}`);
+            
+            socket.once('disconnect', () => this.logger?.debug(`Socket disconnected: ${socket.id}`));
+        });
 
         if (!this.isReady()) throw new Error('Unable to create API client');
         return this;

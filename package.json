@@ -19,6 +19,7 @@
     "minecraft-protocol": "^1.41.2",
     "reciple": "^7.1.10",
     "socket.io": "^4.6.1",
+    "socket.io-client": "^4.6.1",
     "tiny-typed-emitter": "^2.1.0"
   },
   "devDependencies": {

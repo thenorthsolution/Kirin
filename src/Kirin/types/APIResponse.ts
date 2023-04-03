@@ -1,4 +1,4 @@
-import { ServerData, ServerStatus } from '../classes/Server.js';
+import { ServerData, ServerDataWithIdStatus } from '../classes/Server.js';
 
 export type APIResponse = APIPingResponse|APIAuthorizeResponse|APIServerResponse|APIServersResponse;
 
@@ -13,11 +13,11 @@ export interface APIAuthorizeResponse {
 }
 
 export interface APIServerResponse<WithIdStatus extends boolean = true> {
-    type: 'ServerCreate'|'ServerUpdate'|'ServerDelete'|'Server';
-    server: WithIdStatus extends true ? ServerData & { id: string; status: ServerStatus; } : ServerData;
+    type: 'ServerCreate'|'ServerUpdate'|'ServerDelete'|'Server'|'ServerStarting'|'ServerStopping';
+    server: WithIdStatus extends true ? ServerDataWithIdStatus : ServerData;
 }
 
 export interface APIServersResponse<WithIdStatus extends boolean = true> {
     type: 'Servers';
-    servers: (WithIdStatus extends true ? ServerData & { id: string; status: ServerStatus; } : ServerData)[];
+    servers: (WithIdStatus extends true ? ServerDataWithIdStatus : ServerData)[];
 }

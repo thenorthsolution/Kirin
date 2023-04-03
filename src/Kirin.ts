@@ -13,7 +13,7 @@ export class Kirin implements RecipleModuleScript {
 
     public logger?: Logger;
     public client!: RecipleClient;
-    public apiClient!: APIClient<true>;
+    public apiClient!: APIClient;
     public servers!: ServerManager;
     public serversDir: string = path.join(cwd, this.config.serversFolders);
 

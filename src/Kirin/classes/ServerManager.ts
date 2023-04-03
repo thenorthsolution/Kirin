@@ -1,5 +1,5 @@
 import { Channel, Collection, EmbedBuilder, Guild, Interaction, Message, RepliableInteraction, escapeInlineCode, inlineCode, time } from 'discord.js';
-import { Server, ServerData, ServerStatus } from './Server.js';
+import { Server, ServerData, ServerDataWithIdStatus, ServerStatus } from './Server.js';
 import { Kirin } from '../../Kirin.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import path from 'path';
@@ -11,7 +11,7 @@ import { ChildProcess } from 'child_process';
 export interface ServerManagerEvents {
     serverCreate: (server: Server) => any;
     serverDelete: (server: Server) => any;
-    serverUpdate: (server: Server, oldServerData: ServerData) => any;
+    serverUpdate: (oldServer: ServerData, newServer: Server) => any;
     serverStart: (server: Server) => any;
     serverStop: (server: Server) => any;
     serverProcessStart: (childProcess: ChildProcess, server: Server) => any;
@@ -41,9 +41,31 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         this.kirin.client.on('messageDelete', this._onMessageDelete);
         this.kirin.client.on('interactionCreate', this._onInteractionCreate);
 
-        this.on('serverPing', (oP, nP, srv) => srv.logger?.debug(`STATUS: ${srv.status}`));
-        this.on('serverProcessStdout', (msg, srv) => srv.logger?.log(msg));
-        this.on('serverProcessStderr', (msg, srv) => srv.logger?.err(msg));
+        this.on('serverCreate', server => this.kirin.apiClient.socket?.sockets.emit('serverCreate', server.toJSON()));
+        this.on('serverDelete', server => this.kirin.apiClient.socket?.sockets.emit('serverDelete', server.toJSON()));
+        this.on('serverUpdate', (oldServerOptions, newServer) => this.kirin.apiClient.socket?.sockets.emit('serverUpdate', oldServerOptions, newServer.toJSON()));
+        this.on('serverStart', server => this.kirin.apiClient.socket?.sockets.emit('serverStart', server.toJSON()));
+        this.on('serverStop', server => this.kirin.apiClient.socket?.sockets.emit('serverStop', server.toJSON()));
+        this.on('serverProcessStart', (childProcess, server) => this.kirin.apiClient.socket?.sockets.emit('serverProcessStart', childProcess.pid ?? -1, server.toJSON()));
+        this.on('serverProcessStop', (childProcess, server) => this.kirin.apiClient.socket?.sockets.emit('serverProcessStop', childProcess.pid ?? -1, server.toJSON()));
+        this.on('serverProcessError', (error, server) => this.kirin.apiClient.socket?.sockets.emit('serverProcessError', error.message, server.toJSON()));
+
+        this.on('serverProcessStdout', (message, server) => {
+            server.logger?.log(message);
+            this.kirin.apiClient.socket?.sockets.emit('serverProcessStdout', message, server.toJSON());
+        });
+
+        this.on('serverProcessStderr', (message, server) => {
+            server.logger?.err(message);
+            this.kirin.apiClient.socket?.sockets.emit('serverProcessStderr', message, server.toJSON());
+        });
+
+        this.on('serverPing', (oldPingData, newPingData, server) => {
+            server.logger?.debug(`STATUS: ${server.status}; (old: ${oldPingData?.status || 'Null'} | new: ${newPingData.status})`);
+            this.kirin.apiClient.socket?.sockets.emit('serverPing', oldPingData ?? null, newPingData, server.toJSON());
+        });
+
+        this.on('serverStatusUpdate', (oldStatus, newStatus, server) => this.kirin.apiClient.socket?.sockets.emit('serverStatusUpdate', oldStatus, newStatus, server.toJSON()));
     }
 
     public async loadServersFromDir(dir: string, cache: boolean = true): Promise<Server[]> {

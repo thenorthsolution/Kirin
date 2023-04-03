@@ -12,6 +12,8 @@ import { cwd } from 'reciple';
 import { PartialDeep } from 'type-fest';
 import defaultsDeep from 'lodash.defaultsdeep';
 
+export type ServerDataWithIdStatus = ServerData & { id: string; status: ServerStatus; };
+
 export interface ServerData {
     name: string;
     protocol?: 'bedrock'|'java';
@@ -270,7 +272,7 @@ export class Server<Ready extends boolean = boolean> {
             || newOptions.server.cwd !== this.options.server.cwd
             || newOptions.server.jar !== this.options.server.jar;
 
-        this.manager.emit('serverUpdate', this, oldOptions);
+        this.manager.emit('serverUpdate', oldOptions, this);
         this.options = newOptions;
 
         if (isFetch) await this.fetch();
@@ -342,9 +344,9 @@ export class Server<Ready extends boolean = boolean> {
         this._pingInterval = setInterval(async () => this.ping(), interval ?? this.options.ping.pingInterval);
     }
 
-    public toJSON(serverData?: true): ServerData & { id: string; status: ServerStatus; };
+    public toJSON(serverData?: true): ServerDataWithIdStatus;
     public toJSON(serverData?: false): ServerData;
-    public toJSON(serverData: boolean = true): ServerData & { id?: string; status?: ServerStatus; } {
+    public toJSON(serverData: boolean = true): ServerData|ServerDataWithIdStatus {
         return {
             ...(serverData ? { id: this.id, status: this.status } : {}),
             ...this.options
