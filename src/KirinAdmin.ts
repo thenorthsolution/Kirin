@@ -6,6 +6,7 @@ import { Server, ServerData } from './Kirin/classes/Server.js';
 import path from 'path';
 import { randomBytes } from 'crypto';
 import { mkdirSync, rmSync, writeFileSync } from 'fs';
+import { recursiveObjectReplaceValues } from 'fallout-utility';
 
 export class KirinAdmin implements RecipleModuleScript {
     readonly versions: string = '^7';
@@ -37,16 +38,46 @@ export class KirinAdmin implements RecipleModuleScript {
                         .setName('delete')
                         .setDescription('Delete a kirin server')
                     )
+                    .addSubcommand(message => serverOption(message)
+                        .setName('message')
+                        .setDescription('Send message to server process')
+                        .addStringOption(message => message
+                            .setName('message')
+                            .setDescription('Your message')
+                            .setRequired(true)
+                        )
+                    )
                 )
                 .setExecute(async ({ interaction }) => {
-                    const action = interaction.options.getSubcommand() as 'create'|'delete';
+                    const action = interaction.options.getSubcommand() as 'create'|'delete'|'message';
 
                     switch (action) {
                         case 'create':
                             await this.interactionCreateServer(interaction);
                             break;
                         case 'delete':
-                            
+                            await interaction.deferReply({ ephemeral: true });
+
+                            break;
+                        case 'message':
+                            await interaction.deferReply({ ephemeral: true });
+
+                            const message = interaction.options.getString('message', true);
+                            const serverId = interaction.options.getString('server', true);
+                            const server = this.kirin.servers.cache.get(serverId);
+
+                            if (!server) {
+                                await interaction.editReply(recursiveObjectReplaceValues(this.kirin.config.messages.serverNotFound, '{server_id}', serverId));
+                                return;
+                            }
+
+                            if (server.isStopped()) {
+                                await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverIsOffline));
+                                return;
+                            }
+
+                            await interaction.editReply('Message sent');
+
                             break;
                     }
                 })

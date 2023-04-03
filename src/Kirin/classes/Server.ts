@@ -14,7 +14,7 @@ import defaultsDeep from 'lodash.defaultsdeep';
 
 export interface ServerData {
     name: string;
-    protocol: 'bedrock'|'java';
+    protocol?: 'bedrock'|'java';
     description?: string;
     file?: string;
     channelId?: string;
@@ -126,10 +126,10 @@ export class Server<Ready extends boolean = boolean> {
 
 
     get status(): ServerStatus {
-        if (this.process && this.lastPing?.status === 'Online') return 'Online';
-        if (this.process && this.lastPing?.status === 'Offline') return 'Starting';
-        if (!this.isStopped() && this.lastPing?.status === 'Offline') return 'Offline';
-        if (!this.isStopped() && this.lastPing?.status === 'Online') return 'Unattached';
+        if (!this.isStopped() && this.lastPing?.status === 'Online') return 'Online';
+        if (!this.isStopped() && this.lastPing?.status === 'Offline') return 'Starting';
+        if (this.isStopped() && this.lastPing?.status === 'Offline') return 'Offline';
+        if (this.isStopped() && this.lastPing?.status === 'Online') return 'Unattached';
 
         return 'Offline';
     }
@@ -308,7 +308,7 @@ export class Server<Ready extends boolean = boolean> {
             host: this.host,
             port: this.port,
             timeout: this.options.ping.pingTimeout,
-            protocol: this.protocol
+            protocol: this.protocol || 'java'
         });
 
         this.lastPing = newPing;
