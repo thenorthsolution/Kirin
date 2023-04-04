@@ -138,7 +138,7 @@ export class Server<Ready extends boolean = boolean> {
     constructor(public options: ServerData, kirin: Kirin) {
         this.kirin = kirin;
         this.manager = kirin.servers;
-        this.logger = kirin.logger?.clone({ name: `Kirin/Server/${this.name}` })
+        this.logger = kirin.logger?.clone({ name: `Kirin/Server:${this.name}` })
     }
 
     public async start(): Promise<this> {
