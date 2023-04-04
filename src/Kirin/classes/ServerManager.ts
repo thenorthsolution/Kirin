@@ -155,7 +155,7 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
                     return;
                 }
 
-                if (!interaction.memberPermissions.has(server.permissions.start)) {
+                if (server.permissions.start && !interaction.memberPermissions.has(server.permissions.start)) {
                     await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.noStartPermissions));
                     return;
                 };
@@ -169,7 +169,7 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
                     return;
                 }
 
-                if (!interaction.memberPermissions.has(server.permissions.stop)) {
+                if (server.permissions.stop && !interaction.memberPermissions.has(server.permissions.stop)) {
                     await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.noStopPermissions));
                     return;
                 };

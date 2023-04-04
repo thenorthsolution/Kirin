@@ -16,39 +16,25 @@ export type ServerDataWithIdStatus = ServerData & { id: string; status: ServerSt
 
 export interface ServerData {
     name: string;
-    protocol?: 'bedrock'|'java';
-    description?: string;
-    file?: string;
-    channelId?: string;
-    messageId?: string;
+    protocol: 'bedrock'|'java';
+    description?: string|null;
+    file?: string|null;
+    channelId?: string|null;
+    messageId?: string|null;
     ip: string;
     server: {
         cwd: string;
         command: string;
-        jar?: string;
-        args?: string[];
-        serverArgs?: string[];
-        killSignal?: NodeJS.Signals;
-        killOnBotStop?: boolean;
+        jar?: string|null;
+        args?: string[]|null;
+        serverArgs?: string[]|null;
+        killSignal?: NodeJS.Signals|null;
+        killOnBotStop?: boolean|null;
     };
-    messages: {
-        offline: BaseMessageOptions;
-        online: BaseMessageOptions;
-        starting: BaseMessageOptions;
-        unattached: BaseMessageOptions;
-    };
-    components: {
-        start: APIButtonComponentBase<ButtonStyle.Primary|ButtonStyle.Secondary|ButtonStyle.Success|ButtonStyle.Danger>;
-        stop: APIButtonComponentBase<ButtonStyle.Primary|ButtonStyle.Secondary|ButtonStyle.Success|ButtonStyle.Danger>;
-    };
-    permissions: {
-        start: PermissionResolvable;
-        stop: PermissionResolvable;
-    };
-    ping: {
-        pingInterval: number;
-        pingTimeout: number;
-    };
+    messages: Record<'offline'|'online'|'starting'|'unattached', BaseMessageOptions>;
+    components: Record<'start'|'stop', null|APIButtonComponentBase<ButtonStyle.Primary|ButtonStyle.Secondary|ButtonStyle.Success|ButtonStyle.Danger>>;
+    permissions?: null|Record<'start'|'stop', null|PermissionResolvable>;
+    ping: Record<'pingInterval'|'pingTimeout', number>;
 }
 
 export type ServerStatus = 'Online'|'Offline'|'Starting'|'Unattached';
@@ -81,15 +67,19 @@ export class Server<Ready extends boolean = boolean> {
 
     get components() {
         return {
-            start: new ButtonBuilder(this.replacePlaceholders(this.options.components.start)).setCustomId(`kirin-start-${this.id}`),
-            stop: new ButtonBuilder(this.replacePlaceholders(this.options.components.stop)).setCustomId(`kirin-stop-${this.id}`)
+            start: this.options.components.start
+                ? new ButtonBuilder(this.replacePlaceholders(this.options.components.start)).setCustomId(`kirin-start-${this.id}`)
+                : null,
+            stop: this.options.components.stop
+                ? new ButtonBuilder(this.replacePlaceholders(this.options.components.stop)).setCustomId(`kirin-stop-${this.id}`)
+                : null
         };
     }
 
     get permissions() {
         return {
-            start: new PermissionsBitField(this.options.permissions.start),
-            stop: new PermissionsBitField(this.options.permissions.stop)
+            start: this.options.permissions?.start ? new PermissionsBitField(this.options.permissions.start) : null,
+            stop: this.options.permissions?.stop ? new PermissionsBitField(this.options.permissions.stop) : null
         };
     }
 
@@ -113,14 +103,12 @@ export class Server<Ready extends boolean = boolean> {
 
         if (!content) content = { content: `Server status: ${inlineCode(this.status)}` };
 
-        content.components = this.status !== 'Starting' && this.status !== 'Unattached'
+        const actionRowComponents = this.status === 'Online' ? this.components.stop?.toJSON() : this.components.start?.toJSON();
+
+        content.components = this.status !== 'Starting' && this.status !== 'Unattached' && actionRowComponents
             ? [
                 new ActionRowBuilder<MessageActionRowComponentBuilder>({
-                    components: [
-                        this.status === 'Online'
-                            ? this.components.stop.toJSON() 
-                            : this.components.start.toJSON()
-                    ]
+                    components: [actionRowComponents]
                 })]
             : [];
 
@@ -163,7 +151,7 @@ export class Server<Ready extends boolean = boolean> {
         ], {
             cwd: this.cwd,
             detached: !this.server.killOnBotStop,
-            killSignal: this.server.killSignal,
+            killSignal: this.server.killSignal || 'SIGINT',
             env: process.env,
             // shell: true,
             stdio: []
@@ -198,7 +186,7 @@ export class Server<Ready extends boolean = boolean> {
 
         this.logger?.warn(`Stopping ${this.name} (PID: ${this.process.pid})`);
 
-        const kill = process.kill(this.process.pid, this.server.killSignal);
+        const kill = process.kill(this.process.pid, this.server.killSignal || 'SIGINT');
 
         if (!kill) {
             if (this.isStopped()) {
@@ -317,7 +305,7 @@ export class Server<Ready extends boolean = boolean> {
             host: this.host,
             port: this.port,
             timeout: this.options.ping.pingTimeout,
-            protocol: this.protocol || 'java'
+            protocol: this.protocol
         });
 
         this.lastPing = newPing;
@@ -327,9 +315,10 @@ export class Server<Ready extends boolean = boolean> {
         return newPing;
     }
 
-    public saveJson(file?: string): void {
+    public saveJson(file?: string|null): void {
         file = file ?? this.file;
         if (!file) throw new Error('No file path specified');
+        if (!this.file) this.options.file = file;
 
         writeFileSync(file, JSON.stringify(this.toJSON(true), null, 2));
     }
@@ -401,26 +390,24 @@ export class Server<Ready extends boolean = boolean> {
         return server;
     }
 
-    public static validateServerData(obj: any, promise: boolean = false): asserts obj is ServerData {
+    public static validateServerData(obj: PartialDeep<ServerData>, promise: boolean = false): asserts obj is ServerData {
         if (!obj || typeof obj !== 'object') return;
 
         if (!obj.name) throw new Error('Name is required');
         if (!obj.ip) throw new Error('Server IP is required');
+        if (!obj.protocol) throw new Error('Server protocol is required');
+        if (!['java', 'bedrock'].includes(obj.protocol)) throw new Error('Expected server protocol "java"|"bedrock"');
 
         if (!obj.server) throw new Error('Property "server" is required');
         if (!obj.server.cwd) throw new Error('Server cwd is required');
         if (!obj.server.command) throw new Error('Server command is required');
-        if (!obj.server.jar) throw new Error('Server jar is required');
         if (obj.server.args && !Array.isArray(obj.server.args)) throw new Error('Server args is not an array');
+        if (obj.server.serverArgs && !Array.isArray(obj.server.args)) throw new Error('Server args is not an array');
 
         if (!obj.messages) throw new Error('Property "messages" is required');
 
-        const missingMessages = ['offline', 'online', 'starting', 'unattached'].filter(m => !Object.keys(obj.messages).includes(m));
+        const missingMessages = ['offline', 'online', 'starting', 'unattached'].filter(m => !obj.messages || !Object.keys(obj.messages).includes(m));
         if (missingMessages.length) throw new Error(`Missing server messages: ${missingMessages.join(' ')}`);
-
-        if (!obj.permissions) throw new Error('Property "permissions" is required');
-        if (!obj.permissions.start) throw new Error('Start permissions is required');
-        if (!obj.permissions.stop) throw new Error('Stop permissions is required');
 
         if (!obj.ping) throw new Error('Property "ping" is required');
         if (!obj.ping.pingInterval) throw new Error('Server ping interval is required');
