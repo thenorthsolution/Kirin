@@ -49,6 +49,7 @@ export class Server<Ready extends boolean = boolean> {
     private _message?: Message|null = null;
     private _deleted: boolean = false;
     private _pingInterval?: NodeJS.Timer;
+    private _pendingStop: boolean = false;
 
     get name() { return this.options.name; }
     get protocol() { return this.options.protocol; }
@@ -143,6 +144,8 @@ export class Server<Ready extends boolean = boolean> {
     public async start(): Promise<this> {
         if (!this.isStopped()) throw new Error('Server process is already started');
 
+        this._pendingStop = false;
+
         this.logger?.warn(`Starting ${this.name}...`);
         this.logger?.debug(`Starting ${this.name}: cwd: ${this.cwd}; jar: ${this.server.jar}`);
 
@@ -188,6 +191,8 @@ export class Server<Ready extends boolean = boolean> {
 
         this.logger?.warn(`Stopping ${this.name} (PID: ${this.process.pid})`);
 
+        this._pendingStop = true;
+
         const kill = process.kill(this.process.pid, this.server.killSignal || 'SIGINT');
 
         if (!kill) {
@@ -200,6 +205,7 @@ export class Server<Ready extends boolean = boolean> {
                 const timeout = setTimeout(() => res(false), 1000 * 10);
                 const handle = () => {
                     this.process = undefined;
+                    this._pendingStop = false;
                     clearTimeout(timeout);
                     res(true);
                 }
