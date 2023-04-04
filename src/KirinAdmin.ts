@@ -122,6 +122,18 @@ export class KirinAdmin implements RecipleModuleScript {
                             .toJSON()
                     ]
                 },
+                {
+                    type: 1,
+                    components: [
+                        new TextInputBuilder()
+                            .setCustomId('serverArgs')
+                            .setLabel('Server args (Optional)')
+                            .setStyle(TextInputStyle.Paragraph)
+                            .setPlaceholder('--nogui')
+                            .setRequired(false)
+                            .toJSON()
+                    ]
+                }
             ]
         };
 
@@ -143,6 +155,7 @@ export class KirinAdmin implements RecipleModuleScript {
                 cwd: modalInteraction.fields.getTextInputValue('cwd'),
                 jar: modalInteraction.fields.getTextInputValue('jar'),
                 args: modalInteraction.fields.getTextInputValue('args').split(/(\s+)/).filter(Boolean),
+                serverArgs: modalInteraction.fields.getTextInputValue('serverArgs').split(/(\s+)/).filter(Boolean),
                 killOnBotStop: false,
                 killSignal: 'SIGINT'
             },
