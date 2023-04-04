@@ -130,6 +130,7 @@ export class KirinAdmin implements RecipleModuleScript {
                             .setLabel('Server args (Optional)')
                             .setStyle(TextInputStyle.Paragraph)
                             .setPlaceholder('--nogui')
+                            .setValue('--nogui')
                             .setRequired(false)
                             .toJSON()
                     ]
