@@ -150,7 +150,7 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
 
         switch (action) {
             case 'start':
-                if (!server.isStopped()) {
+                if (server.status === 'Online') {
                     await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverAlreadyStarted));
                     return;
                 }
@@ -164,8 +164,13 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
                 await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverStarting));
                 break;
             case 'stop':
-                if (server.isStopped()) {
+                if (server.status === 'Offline') {
                     await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverAlreadyStopped));
+                    return;
+                }
+
+                if (server.status === 'Unattached') {
+                    await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverIsUnattached));
                     return;
                 }
 

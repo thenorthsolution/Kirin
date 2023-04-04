@@ -32,7 +32,8 @@ export const messages = {
     noStopPermissions: `You don't have permissions to stop this server`,
     serverIsOffline: `Server is offline`,
     serverDeleted: `Server has been deleted`,
-    serverIsOnline: `Stop the server to continue`
+    serverIsOnline: `Stop the server to continue`,
+    serverIsUnattached: `Server process is currently not accessible by the bot`
 };
 
 export const defaultConfig: Config = {
