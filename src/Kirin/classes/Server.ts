@@ -25,8 +25,9 @@ export interface ServerData {
     server: {
         cwd: string;
         command: string;
-        jar: string;
+        jar?: string;
         args?: string[];
+        serverArgs?: string[];
         killSignal?: NodeJS.Signals;
         killOnBotStop?: boolean;
     };
@@ -155,7 +156,11 @@ export class Server<Ready extends boolean = boolean> {
         this.logger?.warn(`Starting ${this.name}...`);
         this.logger?.debug(`Starting ${this.name}: cwd: ${this.cwd}; jar: ${this.server.jar}`);
 
-        this.process = spawn(this.server.command, [...(this.server.args ?? []), "-jar", `${this.server.jar}`, '--nogui'], {
+        this.process = spawn(this.server.command, [
+            ...(this.server.args ?? []),
+            ...(this.server.jar ? ["-jar", this.server.jar] : []),
+            ...(this.server.serverArgs ?? ['--nogui'])
+        ], {
             cwd: this.cwd,
             detached: !this.server.killOnBotStop,
             killSignal: this.server.killSignal,
