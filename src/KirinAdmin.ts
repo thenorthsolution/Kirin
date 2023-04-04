@@ -7,6 +7,7 @@ import path from 'path';
 import { randomBytes } from 'crypto';
 import { mkdirSync, rmSync, writeFileSync } from 'fs';
 import { recursiveObjectReplaceValues } from 'fallout-utility';
+import { commandHalt } from './Kirin/utils/commandHalt.js';
 
 export class KirinAdmin implements RecipleModuleScript {
     readonly versions: string = '^7';
@@ -68,6 +69,7 @@ export class KirinAdmin implements RecipleModuleScript {
                             break;
                     }
                 })
+                .setHalt(commandHalt)
         );
 
         return true;
