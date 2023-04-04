@@ -1,5 +1,5 @@
-import { ServerStatus } from '../classes/Server.js';
 import JavaProtocol, { NewPingResult } from 'minecraft-protocol';
+import { ServerStatus } from '../classes/Server.js';
 import BedrockProtocol from 'bedrock-protocol';
 
 export interface PingData {

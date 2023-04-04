@@ -1,16 +1,16 @@
-import { randomBytes } from 'crypto';
-import { APIButtonComponentBase, APIButtonComponentWithCustomId, ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ButtonStyle, ChannelType, Guild, GuildTextBasedChannel, If, InteractionButtonComponentData, Message, MessageActionRowComponentBuilder, PermissionResolvable, PermissionsBitField, StageChannel, TextBasedChannel, inlineCode } from 'discord.js';
-import { Kirin } from '../../Kirin.js';
-import { ServerManager } from './ServerManager.js';
-import { readFileSync, rmSync, writeFileSync } from 'fs';
-import { ChildProcess, spawn } from 'child_process';
-import { PingData, pingServer } from '../utils/ping.js';
-import { resolveFromCachedManager } from '../utils/managers.js';
+import { APIButtonComponentBase, BaseMessageOptions, ButtonBuilder, ButtonStyle, ChannelType, ComponentType, Guild, GuildTextBasedChannel, If, Message, PermissionResolvable, PermissionsBitField, StageChannel, inlineCode } from 'discord.js';
 import { Logger, recursiveObjectReplaceValues } from 'fallout-utility';
-import path from 'path';
-import { cwd } from 'reciple';
-import { PartialDeep } from 'type-fest';
+import { resolveFromCachedManager } from '../utils/managers.js';
+import { readFileSync, rmSync, writeFileSync } from 'fs';
+import { PingData, pingServer } from '../utils/ping.js';
+import { ChildProcess, spawn } from 'child_process';
+import { ServerManager } from './ServerManager.js';
 import defaultsDeep from 'lodash.defaultsdeep';
+import { PartialDeep } from 'type-fest';
+import { Kirin } from '../../Kirin.js';
+import { randomBytes } from 'crypto';
+import { cwd } from 'reciple';
+import path from 'path';
 
 export type ServerDataWithIdStatus = ServerData & { id: string; status: ServerStatus; };
 
@@ -107,9 +107,11 @@ export class Server<Ready extends boolean = boolean> {
 
         content.components = this.status !== 'Starting' && this.status !== 'Unattached' && actionRowComponents
             ? [
-                new ActionRowBuilder<MessageActionRowComponentBuilder>({
+                {
+                    type: ComponentType.ActionRow,
                     components: [actionRowComponents]
-                })]
+                }
+            ]
             : [];
 
         return content;

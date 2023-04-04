@@ -1,5 +1,5 @@
 import { APIClient } from '../classes/APIClient.js';
-import { Server, ServerData } from '../classes/Server.js';
+import { ServerData } from '../classes/Server.js';
 import type { PartialDeep } from 'type-fest';
 
 export default (api: APIClient) => {

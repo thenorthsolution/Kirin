@@ -1,10 +1,10 @@
+import { PermissionResolvable, inlineCode } from 'discord.js';
 import { CorsOptions, CorsOptionsDelegate } from 'cors';
-import { BaseMessageOptions, PermissionResolvable, inlineCode } from 'discord.js';
 import { createReadFile } from 'fallout-utility';
-import { writeFileSync } from 'fs';
 import defaultsDeep from 'lodash.defaultsdeep';
-import path from 'path';
+import { writeFileSync } from 'fs';
 import { cwd } from 'reciple';
+import path from 'path';
 
 export interface Config {
     serversFolders: string;

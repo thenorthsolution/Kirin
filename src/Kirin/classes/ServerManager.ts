@@ -1,12 +1,12 @@
 import { Channel, Collection, EmbedBuilder, Guild, Interaction, Message, RepliableInteraction, escapeInlineCode, inlineCode, time } from 'discord.js';
-import { Server, ServerData, ServerDataWithIdStatus, ServerStatus } from './Server.js';
-import { Kirin } from '../../Kirin.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
-import path from 'path';
-import { Logger } from 'fallout-utility';
+import { Server, ServerData, ServerStatus } from './Server.js';
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { PingData } from '../utils/ping.js';
 import { ChildProcess } from 'child_process';
+import { PingData } from '../utils/ping.js';
+import { Logger } from 'fallout-utility';
+import { Kirin } from '../../Kirin.js';
+import path from 'path';
 
 export interface ServerManagerEvents {
     serverCreate: (server: Server) => any;

@@ -1,6 +1,6 @@
+import { Server, ServerData } from '../classes/Server.js';
 import { mkdirSync, rmSync, writeFileSync } from 'fs';
 import { APIClient } from '../classes/APIClient.js';
-import { Server, ServerData } from '../classes/Server.js';
 import crypto from 'crypto';
 import path from 'path';
 

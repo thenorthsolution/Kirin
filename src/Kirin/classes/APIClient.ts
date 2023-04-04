@@ -1,17 +1,17 @@
-import { Server as SocketServer } from 'socket.io';
-import { Kirin } from '../../Kirin.js';
+import { RequestHandler, RequestHandlerOptions } from './RequestHandler.js';
+import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import express, { Express, Request, Response } from 'express';
+import { SocketEvents } from '../types/SocketEvents.js';
+import { Server as SocketServer } from 'socket.io';
+import { recursiveDefaults } from 'reciple';
 import { Server as HttpServer } from 'http';
 import { Awaitable, If } from 'discord.js';
 import { Logger } from 'fallout-utility';
-import { recursiveDefaults } from 'reciple';
+import { Kirin } from '../../Kirin.js';
+import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
-import bodyParser from 'body-parser';
 import cors from 'cors';
-import { RequestHandler, RequestHandlerOptions } from './RequestHandler.js';
-import { SocketEvents } from '../types/SocketEvents.js';
 
 export class APIClient<Ready extends boolean = boolean> {
     private _express: Express = express();

@@ -1,8 +1,8 @@
+import { APIErrorResponse } from '../types/APIErrorResponse.js';
+import { APIResponse } from '../types/APIResponse.js';
 import { Request, Response } from 'express';
 import { APIClient } from './APIClient.js';
-import { APIErrorResponse } from '../types/APIErrorResponse.js';
 import { Awaitable } from 'discord.js';
-import { APIResponse } from '../types/APIResponse.js';
 
 export interface RequestHandlerOptions {
     authorize?: boolean;

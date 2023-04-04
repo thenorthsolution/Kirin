@@ -1,13 +1,13 @@
+import { APIModalInteractionResponseCallbackData, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Message, ModalData, PermissionsBitField, TextInputBuilder, TextInputStyle } from 'discord.js';
 import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModule, RecipleModuleScript, SlashCommandBuilder, cwd } from 'reciple';
-import kirin, { Kirin } from './Kirin.js';
-import { serverOption } from './Kirin/utils/commandOption.js';
-import { ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, Message, PermissionsBitField, TextInputBuilder, TextInputStyle } from 'discord.js';
-import { Server, ServerData } from './Kirin/classes/Server.js';
-import path from 'path';
-import { randomBytes } from 'crypto';
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
 import { recursiveObjectReplaceValues } from 'fallout-utility';
+import { Server, ServerData } from './Kirin/classes/Server.js';
+import { serverOption } from './Kirin/utils/commandOption.js';
 import { commandHalt } from './Kirin/utils/commandHalt.js';
+import { mkdirSync, rmSync, writeFileSync } from 'fs';
+import kirin, { Kirin } from './Kirin.js';
+import { randomBytes } from 'crypto';
+import path from 'path';
 
 export class KirinAdmin implements RecipleModuleScript {
     readonly versions: string = '^7';
@@ -82,12 +82,12 @@ export class KirinAdmin implements RecipleModuleScript {
         const ip = interaction.options.getString('ip', true);
         const createMessage = interaction.options.getBoolean('create-component-message', true);
 
-        const modal = {
+        const modal: APIModalInteractionResponseCallbackData = {
             title: 'Server Information',
             custom_id: 'kirin-server-modal',
             components: [
                 {
-                    type: 1,
+                    type: ComponentType.ActionRow,
                     components: [
                         new TextInputBuilder()
                             .setCustomId('cwd')
@@ -99,7 +99,7 @@ export class KirinAdmin implements RecipleModuleScript {
                     ]
                 },
                 {
-                    type: 1,
+                    type: ComponentType.ActionRow,
                     components: [
                         new TextInputBuilder()
                             .setCustomId('jar')
@@ -111,7 +111,7 @@ export class KirinAdmin implements RecipleModuleScript {
                     ]
                 },
                 {
-                    type: 1,
+                    type: ComponentType.ActionRow,
                     components: [
                         new TextInputBuilder()
                             .setCustomId('args')
@@ -123,7 +123,7 @@ export class KirinAdmin implements RecipleModuleScript {
                     ]
                 },
                 {
-                    type: 1,
+                    type: ComponentType.ActionRow,
                     components: [
                         new TextInputBuilder()
                             .setCustomId('serverArgs')
