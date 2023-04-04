@@ -120,8 +120,8 @@ export class Server<Ready extends boolean = boolean> {
 
 
     get status(): ServerStatus {
-        if (!this.isStopped() && this.lastPing?.status === 'Online') return 'Online';
-        if (!this.isStopped() && this.lastPing?.status === 'Offline') return 'Starting';
+        if (!this.isStopped() && this.lastPing?.status === 'Online' && !this._pendingStop) return 'Online';
+        if (!this.isStopped() && this.lastPing?.status === 'Offline' && !this._pendingStop) return 'Starting';
         if (this.isStopped() && this.lastPing?.status === 'Offline') return 'Offline';
         if (this.isStopped() && this.lastPing?.status === 'Online') return 'Unattached';
 
