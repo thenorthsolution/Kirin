@@ -2,7 +2,7 @@
   "name": "reciple-app",
   "private": true,
   "type": "module",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "scripts": {
     "build": "npx rimraf ./modules && npx tsc",
     "start": "npx reciple",
