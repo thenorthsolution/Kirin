@@ -17,7 +17,7 @@
     "fallout-utility": "^2.3.0",
     "lodash.defaultsdeep": "^4.6.1",
     "minecraft-protocol": "^1.41.2",
-    "reciple": "^7.1.11",
+    "reciple": "^7.2.2",
     "socket.io": "^4.6.1",
     "tiny-typed-emitter": "^2.1.0"
   },
@@ -27,7 +27,7 @@
     "@types/lodash.defaultsdeep": "^4.6.7",
     "@types/node": "^18.15.11",
     "rimraf": "^4.4.1",
-    "type-fest": "^3.7.2",
-    "typescript": "^5.0.3"
+    "type-fest": "^3.8.0",
+    "typescript": "^5.0.4"
   }
 }
