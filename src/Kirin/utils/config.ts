@@ -2,7 +2,7 @@ import { PermissionResolvable, inlineCode, mergeDefault } from 'discord.js';
 import { CorsOptions, CorsOptionsDelegate } from 'cors';
 import { createReadFile } from 'fallout-utility';
 import { writeFileSync } from 'fs';
-import { cwd } from 'reciple';
+import { cli } from 'reciple';
 import path from 'path';
 
 export interface Config {
@@ -52,12 +52,12 @@ export const defaultConfig: Config = {
 };
 
 export function getConfig(): Config {
-    return createReadFile(path.join(cwd, 'config/config.json'), defaultConfig, {
+    return createReadFile(path.join(cli.cwd, 'config/config.json'), defaultConfig, {
         encodeFileData: data => JSON.stringify(data, null, 2),
         formatReadData: data => {
             const config = mergeDefault(JSON.parse(data.toString('utf-8')), defaultConfig) as Config;
 
-            writeFileSync(path.join(cwd, 'config/config.json'), JSON.stringify(config, null, 2));
+            writeFileSync(path.join(cli.cwd, 'config/config.json'), JSON.stringify(config, null, 2));
 
             return config;
         },

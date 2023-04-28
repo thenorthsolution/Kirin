@@ -1,4 +1,4 @@
-import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModule, RecipleModuleScriptUnloadData, RecipleModuleScript, SlashCommandBuilder, cwd } from 'reciple';
+import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModule, RecipleModuleScriptUnloadData, RecipleModuleScript, SlashCommandBuilder, cli } from 'reciple';
 import { Logger, recursiveObjectReplaceValues } from 'fallout-utility';
 import { ServerManager } from './Kirin/classes/ServerManager.js';
 import { serverOption } from './Kirin/utils/commandOption.js';
@@ -15,7 +15,7 @@ export class Kirin implements RecipleModuleScript {
     public client!: RecipleClient;
     public apiClient!: APIClient;
     public servers!: ServerManager;
-    public serversDir: string = path.join(cwd, this.config.serversFolders);
+    public serversDir: string = path.join(cli.cwd, this.config.serversFolders);
 
     readonly commands: (AnyCommandBuilder|AnyCommandData)[] = !this.config.command.enabled
         ? []

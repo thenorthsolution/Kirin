@@ -7,7 +7,7 @@ import { ChildProcess, spawn } from 'child_process';
 import { ServerManager } from './ServerManager.js';
 import { Kirin } from '../../Kirin.js';
 import { randomBytes } from 'crypto';
-import { cwd } from 'reciple';
+import { cli } from 'reciple';
 import path from 'path';
 
 export type ServerDataWithIdStatus = ServerData & { id: string; status: ServerStatus; };
@@ -126,7 +126,7 @@ export class Server<Ready extends boolean = boolean> {
         return 'Offline';
     }
 
-    get cwd() { return path.isAbsolute(this.server.cwd) ? this.server.cwd : path.join(cwd, this.server.cwd); }
+    get cwd() { return path.isAbsolute(this.server.cwd) ? this.server.cwd : path.join(cli.cwd, this.server.cwd); }
     get cached() { return !!this.manager.cache.get(this.id); }
     get deleted() { return this._deleted; }
 
