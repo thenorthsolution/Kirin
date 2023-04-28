@@ -1,12 +1,10 @@
-import { APIButtonComponentBase, BaseMessageOptions, ButtonBuilder, ButtonStyle, ChannelType, ComponentType, Guild, GuildTextBasedChannel, If, Message, PermissionResolvable, PermissionsBitField, StageChannel, inlineCode } from 'discord.js';
-import { Logger, recursiveObjectReplaceValues } from 'fallout-utility';
+import { APIButtonComponentBase, BaseMessageOptions, ButtonBuilder, ButtonStyle, ChannelType, ComponentType, Guild, GuildTextBasedChannel, If, Message, PermissionResolvable, PermissionsBitField, StageChannel, inlineCode, mergeDefault } from 'discord.js';
+import { Logger, recursiveObjectReplaceValues, PartialDeep } from 'fallout-utility';
 import { resolveFromCachedManager } from '../utils/managers.js';
 import { readFileSync, rmSync, writeFileSync } from 'fs';
 import { PingData, pingServer } from '../utils/ping.js';
 import { ChildProcess, spawn } from 'child_process';
 import { ServerManager } from './ServerManager.js';
-import defaultsDeep from 'lodash.defaultsdeep';
-import { PartialDeep } from 'type-fest';
 import { Kirin } from '../../Kirin.js';
 import { randomBytes } from 'crypto';
 import { cwd } from 'reciple';
@@ -16,28 +14,28 @@ export type ServerDataWithIdStatus = ServerData & { id: string; status: ServerSt
 
 export interface ServerData {
     name: string;
-    protocol: 'bedrock'|'java';
-    description?: string|null;
-    file?: string|null;
-    channelId?: string|null;
-    messageId?: string|null;
+    protocol: 'bedrock' | 'java';
+    description?: string | null;
+    file?: string | null;
+    channelId?: string | null;
+    messageId?: string | null;
     ip: string;
     server: {
         cwd: string;
         command: string;
-        jar?: string|null;
-        args?: string[]|null;
-        serverArgs?: string[]|null;
-        killSignal?: NodeJS.Signals|null;
-        killOnBotStop?: boolean|null;
+        jar?: string | null;
+        args?: string[] | null;
+        serverArgs?: string[] | null;
+        killSignal?: NodeJS.Signals | null;
+        killOnBotStop?: boolean | null;
     };
-    messages: Record<'offline'|'online'|'starting'|'unattached', BaseMessageOptions>;
-    components: Record<'start'|'stop', null|APIButtonComponentBase<ButtonStyle.Primary|ButtonStyle.Secondary|ButtonStyle.Success|ButtonStyle.Danger>>;
-    permissions?: null|Record<'start'|'stop', null|PermissionResolvable>;
-    ping: Record<'pingInterval'|'pingTimeout', number>;
+    messages: Record<'offline' | 'online' | 'starting' | 'unattached', BaseMessageOptions>;
+    components: Record<'start' | 'stop', null | APIButtonComponentBase<ButtonStyle.Primary | ButtonStyle.Secondary | ButtonStyle.Success | ButtonStyle.Danger>>;
+    permissions?: null | Record<'start' | 'stop', null | PermissionResolvable>;
+    ping: Record<'pingInterval' | 'pingTimeout', number>;
 }
 
-export type ServerStatus = 'Online'|'Offline'|'Starting'|'Unattached';
+export type ServerStatus = 'Online' | 'Offline' | 'Starting' | 'Unattached';
 
 export class Server<Ready extends boolean = boolean> {
     readonly id: string = randomBytes(16).toString('hex');
@@ -45,8 +43,8 @@ export class Server<Ready extends boolean = boolean> {
     readonly manager: ServerManager;
     readonly logger?: Logger;
 
-    private _channel?: Exclude<GuildTextBasedChannel, StageChannel>|null = null;
-    private _message?: Message|null = null;
+    private _channel?: Exclude<GuildTextBasedChannel, StageChannel> | null = null;
+    private _message?: Message | null = null;
     private _deleted: boolean = false;
     private _pingInterval?: NodeJS.Timer;
     private _pendingStop: boolean = false;
@@ -55,10 +53,10 @@ export class Server<Ready extends boolean = boolean> {
     get protocol() { return this.options.protocol; }
     get description() { return this.options.description; }
     get channelId() { return this.options.channelId; }
-    get channel() { return this._channel as If<Ready, Exclude<GuildTextBasedChannel, StageChannel>|undefined>; }
-    get guild() { return (this._channel !== null ? this._channel?.guild : null) as If<Ready, Guild|undefined>; }
+    get channel() { return this._channel as If<Ready, Exclude<GuildTextBasedChannel, StageChannel> | undefined>; }
+    get guild() { return (this._channel !== null ? this._channel?.guild : null) as If<Ready, Guild | undefined>; }
     get messageId() { return this.options.messageId; }
-    get message() { return this._message as If<Ready, Message|undefined>; }
+    get message() { return this._message as If<Ready, Message | undefined>; }
     get ip() { return this.options.ip; }
     get host() { return this.options.ip.split(':')[0]; }
     get port() { return Number(this.options.ip.split(':')[1] ?? 25565); }
@@ -128,7 +126,7 @@ export class Server<Ready extends boolean = boolean> {
         return 'Offline';
     }
 
-    get cwd () { return path.isAbsolute(this.server.cwd) ? this.server.cwd : path.join(cwd, this.server.cwd); }
+    get cwd() { return path.isAbsolute(this.server.cwd) ? this.server.cwd : path.join(cwd, this.server.cwd); }
     get cached() { return !!this.manager.cache.get(this.id); }
     get deleted() { return this._deleted; }
 
@@ -263,7 +261,7 @@ export class Server<Ready extends boolean = boolean> {
 
     public async update(options: PartialDeep<ServerData>): Promise<this> {
         const oldOptions = this.options;
-        const newOptions = defaultsDeep(options, this.options) as ServerData;
+        const newOptions = mergeDefault(options, this.options) as ServerData;
         const isFetch = newOptions.channelId !== this.options.channelId
             || newOptions.messageId !== this.options.messageId
             || newOptions.ip !== this.options.ip
@@ -323,7 +321,7 @@ export class Server<Ready extends boolean = boolean> {
         return newPing;
     }
 
-    public saveJson(file?: string|null): void {
+    public saveJson(file?: string | null): void {
         file = file ?? this.file;
         if (!file) throw new Error('No file path specified');
         if (!this.file) this.options.file = file;
@@ -350,14 +348,14 @@ export class Server<Ready extends boolean = boolean> {
 
     public toJSON(serverData?: true): ServerDataWithIdStatus;
     public toJSON(serverData?: false): ServerData;
-    public toJSON(serverData: boolean = true): ServerData|ServerDataWithIdStatus {
+    public toJSON(serverData: boolean = true): ServerData | ServerDataWithIdStatus {
         return {
             ...(serverData ? { id: this.id, status: this.status } : {}),
             ...this.options
         };
     }
 
-    public replacePlaceholders<T extends string|object>(data: T, customPlaceholders?: Record<string, string>): T {
+    public replacePlaceholders<T extends string | object>(data: T, customPlaceholders?: Record<string, string>): T {
         return recursiveObjectReplaceValues(
             data,
             [
@@ -398,7 +396,7 @@ export class Server<Ready extends boolean = boolean> {
         return server;
     }
 
-    public static validateServerData(obj: PartialDeep<ServerData>, promise: boolean = false): asserts obj is ServerData {
+    public static validateServerData(obj: Partial<ServerData>, promise: boolean = false): asserts obj is ServerData {
         if (!obj || typeof obj !== 'object') return;
 
         if (!obj.name) throw new Error('Name is required');

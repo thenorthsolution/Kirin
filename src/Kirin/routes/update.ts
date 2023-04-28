@@ -1,6 +1,6 @@
 import { APIClient } from '../classes/APIClient.js';
 import { ServerData } from '../classes/Server.js';
-import type { PartialDeep } from 'type-fest';
+import type { PartialDeep } from 'fallout-utility';
 
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
