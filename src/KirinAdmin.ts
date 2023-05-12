@@ -1,5 +1,5 @@
-import { APIModalInteractionResponseCallbackData, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Message, ModalData, PermissionsBitField, TextInputBuilder, TextInputStyle } from 'discord.js';
-import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModule, RecipleModuleScript, SlashCommandBuilder, cwd } from 'reciple';
+import { APIModalInteractionResponseCallbackData, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Message, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModule, RecipleModuleScript, SlashCommandBuilder, cli } from 'reciple';
 import { recursiveObjectReplaceValues } from 'fallout-utility';
 import { Server, ServerData } from './Kirin/classes/Server.js';
 import { serverOption } from './Kirin/utils/commandOption.js';
@@ -94,7 +94,7 @@ export class KirinAdmin implements RecipleModuleScript {
                             .setLabel('Server root directory')
                             .setStyle(TextInputStyle.Short)
                             .setPlaceholder('/Users/user/Documents/testserver')
-                            .setValue(cwd)
+                            .setValue(cli.cwd)
                             .toJSON()
                     ]
                 },
