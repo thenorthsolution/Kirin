@@ -1,4 +1,4 @@
-import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModule, RecipleModuleScriptUnloadData, RecipleModuleScript, SlashCommandBuilder, cli } from 'reciple';
+import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModuleScriptUnloadData, RecipleModuleScript, SlashCommandBuilder, cli } from 'reciple';
 import { Logger, recursiveObjectReplaceValues } from 'fallout-utility';
 import { ServerManager } from './Kirin/classes/ServerManager.js';
 import { serverOption } from './Kirin/utils/commandOption.js';
@@ -47,7 +47,7 @@ export class Kirin implements RecipleModuleScript {
                 .setHalt(commandHalt)
         ];
 
-    public async onStart(client: RecipleClient<false>, module: RecipleModule): Promise<boolean> {
+    public async onStart(client: RecipleClient<false>): Promise<boolean> {
         this.logger = client.logger?.clone({ name: 'Kirin' });
         this.client = client;
         this.apiClient = new APIClient(this);
@@ -57,7 +57,7 @@ export class Kirin implements RecipleModuleScript {
         return true;
     }
 
-    public async onLoad(client: RecipleClient<true>, module: RecipleModule): Promise<void> {
+    public async onLoad(client: RecipleClient<true>): Promise<void> {
         if (this.config.api.enabled) {
             await this.apiClient.start();
             this.logger?.log(`Kirin is now active! http://127.0.0.1:${this.config.api.port}`);
