@@ -1,6 +1,12 @@
 import JavaProtocol, { NewPingResult } from 'minecraft-protocol';
 import { ServerStatus } from '../classes/Server.js';
 import BedrockProtocol from 'bedrock-protocol';
+import { Worker } from 'worker_threads';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface PingData {
     status: Exclude<ServerStatus, 'Starting'|'Stopping'>;
@@ -21,8 +27,22 @@ export interface PingOptions {
 export type JavaPingOptions = Omit<PingOptions, 'protocol'> & { protocol: 'java' };
 export type BedrockPingOptions = Omit<PingOptions, 'protocol' | 'timeout'> & { protocol: 'bedrock' };
 
-export async function pingServer(options: JavaPingOptions|BedrockPingOptions): Promise<PingData> {
-    return options.protocol === 'java' ? pingJavaServer(options) : pingBedrockServer(options);
+export async function pingServer(options: (JavaPingOptions|BedrockPingOptions) & { useWorkerThread?: boolean; }): Promise<PingData> {
+    if (options.useWorkerThread === false) {
+        return options.protocol === 'java' ? await pingJavaServer(options) : await pingBedrockServer(options);
+    }
+
+    return new Promise((res, rej) => {
+        const worker = new Worker(path.join(__dirname, './ping.worker.js'), {
+            workerData: options
+        });
+
+        worker.on('message', res);
+        worker.on('error', rej);
+        worker.on('exit', code => {
+            if (code !== 0) rej(new Error(`Ping worker exited with an error code: ${code}`));
+        });
+    });
 }
 
 export async function pingJavaServer(options: JavaPingOptions): Promise<PingData> {
