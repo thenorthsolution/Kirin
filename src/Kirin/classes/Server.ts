@@ -1,7 +1,6 @@
 import { APIButtonComponentBase, BaseMessageOptions, ButtonBuilder, ButtonStyle, ChannelType, ComponentType, Guild, GuildTextBasedChannel, If, Message, PermissionResolvable, PermissionsBitField, StageChannel, inlineCode, mergeDefault } from 'discord.js';
 import { Logger, recursiveObjectReplaceValues, PartialDeep } from 'fallout-utility';
 import { resolveFromCachedManager } from '../utils/managers.js';
-import { readFileSync, rmSync, writeFileSync } from 'fs';
 import { PingData, pingServer } from '../utils/ping.js';
 import { ChildProcess, spawn } from 'child_process';
 import { ServerManager } from './ServerManager.js';
@@ -9,6 +8,7 @@ import { Kirin } from '../../Kirin.js';
 import { randomBytes } from 'crypto';
 import { cli } from 'reciple';
 import path from 'path';
+import { readFile, rm, writeFile } from 'fs/promises';
 
 export type ServerDataWithIdStatus = ServerData & { id: string; status: ServerStatus; };
 
@@ -156,7 +156,6 @@ export class Server<Ready extends boolean = boolean> {
             detached: !this.server.killOnBotStop,
             killSignal: this.server.killSignal || 'SIGINT',
             env: process.env,
-            // shell: true,
             stdio: []
         });
 
@@ -256,7 +255,7 @@ export class Server<Ready extends boolean = boolean> {
 
         this._deleted = true;
 
-        if (deleteJsonFile && this.file) rmSync(this.file, { force: true, recursive: true });
+        if (deleteJsonFile && this.file) await rm(this.file, { force: true, recursive: true });
     }
 
     public async update(options: PartialDeep<ServerData>): Promise<this> {
@@ -279,7 +278,7 @@ export class Server<Ready extends boolean = boolean> {
         if (isFetch) await this.fetch();
         if (!oldOptions.messageId && newOptions.messageId && this.channel) await this.createMessage({ deleteOld: true });
 
-        this.saveJson();
+        await this.saveJson();
 
         return this;
     }
@@ -302,7 +301,7 @@ export class Server<Ready extends boolean = boolean> {
             this.options.channelId = channel?.id;
         }
 
-        this.saveJson();
+        await this.saveJson();
     }
 
     public async ping(): Promise<PingData> {
@@ -321,12 +320,12 @@ export class Server<Ready extends boolean = boolean> {
         return newPing;
     }
 
-    public saveJson(file?: string | null): void {
+    public async saveJson(file?: string | null): Promise<void> {
         file = file ?? this.file;
         if (!file) throw new Error('No file path specified');
         if (!this.file) this.options.file = file;
 
-        writeFileSync(file, JSON.stringify(this.toJSON(true), null, 2));
+        await writeFile(file, JSON.stringify(this.toJSON(true), null, 2));
     }
 
     public isFetched(): this is Server<true> {
@@ -381,7 +380,7 @@ export class Server<Ready extends boolean = boolean> {
             if (cached) return cached;
         }
 
-        const serverJson: ServerData = JSON.parse(readFileSync(file, 'utf-8'));
+        const serverJson: ServerData = JSON.parse(await readFile(file, 'utf-8'));
         const server: Server = new Server(serverJson, kirin);
 
         serverJson.file = file;

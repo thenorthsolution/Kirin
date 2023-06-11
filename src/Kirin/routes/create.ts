@@ -1,8 +1,8 @@
 import { Server, ServerData } from '../classes/Server.js';
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
 import { APIClient } from '../classes/APIClient.js';
 import crypto from 'crypto';
 import path from 'path';
+import { mkdir, rm, writeFile } from 'fs/promises';
 
 export default (api: APIClient) => {
     const apiPath = api.apiPath + '/servers';
@@ -17,13 +17,13 @@ export default (api: APIClient) => {
 
                 const file = path.join(api.kirin.serversDir, crypto.randomBytes(10).toString('base64url') + '.json');
 
-                mkdirSync(api.kirin.serversDir, { recursive: true });
-                writeFileSync(file, JSON.stringify(data, null, 2));
+                await mkdir(api.kirin.serversDir, { recursive: true });
+                await writeFile(file, JSON.stringify(data, null, 2));
 
                 const server = await Server.from(file, api.kirin, true).catch(() => null);
 
                 if (!server) {
-                    rmSync(file, { force: true });
+                    await rm(file, { force: true });
                     return requestHandler.sendAPIErrorResponse(400, { error: 'ServerCreateFailed', message: 'Unable to resolve server data' });
                 }
 

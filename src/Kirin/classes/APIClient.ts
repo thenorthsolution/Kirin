@@ -1,5 +1,4 @@
 import { RequestHandler, RequestHandlerOptions } from './RequestHandler.js';
-import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import express, { Express, Request, Response } from 'express';
 import { SocketEvents } from '../types/SocketEvents.js';
 import { Server as SocketServer } from 'socket.io';
@@ -10,8 +9,10 @@ import { Logger } from 'fallout-utility';
 import { Kirin } from '../../Kirin.js';
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import path from 'path';
 import cors from 'cors';
+import { mkdir, readdir, stat } from 'fs/promises';
 
 export class APIClient<Ready extends boolean = boolean> {
     private _express: Express = express();
@@ -66,9 +67,9 @@ export class APIClient<Ready extends boolean = boolean> {
     }
 
     public async loadRoutes(): Promise<void> {
-        if (!existsSync(this.routesDir)) mkdirSync(this.routesDir);
+        if (!existsSync(this.routesDir)) await mkdir(this.routesDir);
 
-        const files = readdirSync(this.routesDir).map(f => path.join(this.routesDir, f)).filter(f => f.endsWith('.js') && lstatSync(f).isFile());
+        const files = await Promise.all((await readdir(this.routesDir)).map(f => path.join(this.routesDir, f)).filter(async f => f.endsWith('.js') && (await stat(f)).isFile()));
 
         for (const file of files) {
             try {

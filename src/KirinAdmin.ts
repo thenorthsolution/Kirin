@@ -1,13 +1,13 @@
-import { APIModalInteractionResponseCallbackData, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Message, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { APIModalInteractionResponseCallbackData, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Message, TextInputBuilder, TextInputStyle, codeBlock } from 'discord.js';
 import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModuleScript, SlashCommandBuilder, cli } from 'reciple';
 import { recursiveObjectReplaceValues } from 'fallout-utility';
 import { Server, ServerData } from './Kirin/classes/Server.js';
 import { serverOption } from './Kirin/utils/commandOption.js';
 import { commandHalt } from './Kirin/utils/commandHalt.js';
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
 import kirin, { Kirin } from './Kirin.js';
 import { randomBytes } from 'crypto';
 import path from 'path';
+import { mkdir, rm, writeFile } from 'fs/promises';
 
 export class KirinAdmin implements RecipleModuleScript {
     readonly versions: string = '^7';
@@ -155,8 +155,8 @@ export class KirinAdmin implements RecipleModuleScript {
                 command: 'java',
                 cwd: modalInteraction.fields.getTextInputValue('cwd'),
                 jar: modalInteraction.fields.getTextInputValue('jar'),
-                args: modalInteraction.fields.getTextInputValue('args').split(/(\s+)/).filter(Boolean),
-                serverArgs: modalInteraction.fields.getTextInputValue('serverArgs').split(/(\s+)/).filter(Boolean),
+                args: modalInteraction.fields.getTextInputValue('args').split(/(\s+)/).filter(v => v.trim()),
+                serverArgs: modalInteraction.fields.getTextInputValue('serverArgs').split(/(\s+)/).filter(v => v.trim()),
                 killOnBotStop: false,
                 killSignal: 'SIGINT'
             },
@@ -201,14 +201,21 @@ export class KirinAdmin implements RecipleModuleScript {
 
         const file = path.join(this.kirin.serversDir, randomBytes(10).toString('base64url') + '.json');
 
-        mkdirSync(this.kirin.serversDir, { recursive: true });
-        writeFileSync(file, JSON.stringify(serverData, null, 2));
+        await mkdir(this.kirin.serversDir, { recursive: true });
+        await writeFile(file, JSON.stringify(serverData, null, 2));
 
-        const server = await Server.from(file, this.kirin, true).catch(() => null);
+        let err: any;
+
+        const server = await Server.from(file, this.kirin, true).catch(error => {
+            err = error;
+        });
 
         if (!server) {
+            this.kirin.logger?.err(err);
+            await interaction.editReply(`An error occured while creating server!\n${codeBlock(String(err))}`);
             await message?.delete().catch(() => {});
-            rmSync(file, { force: true });
+            await rm(file, { force: true });
+            return;
         }
 
         await modalInteraction.editReply('Server created!');
