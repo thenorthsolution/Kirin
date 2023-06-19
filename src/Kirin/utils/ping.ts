@@ -4,16 +4,19 @@ import BedrockProtocol from 'bedrock-protocol';
 import { Worker } from 'worker_threads';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { parseBase64URL } from './parseBase64URL.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export interface PingData {
     status: Exclude<ServerStatus, 'Starting'|'Stopping'>;
-    maxPlayers: null|number;
-    onlinePlayers: null|number;
+    maxPlayers: number;
+    onlinePlayers: number;
     version: null|string;
     latency: null|number;
+    motd: null|string;
+    favicon: null|Buffer;
     pingedAt: Date;
 }
 
@@ -32,7 +35,7 @@ export async function pingServer(options: (JavaPingOptions|BedrockPingOptions) &
         return options.protocol === 'java' ? await pingJavaServer(options) : await pingBedrockServer(options);
     }
 
-    return new Promise((res, rej) => {
+    const data: PingData = await new Promise((res, rej) => {
         const worker = new Worker(path.join(__dirname, './ping.worker.js'), {
             workerData: options
         });
@@ -43,6 +46,12 @@ export async function pingServer(options: (JavaPingOptions|BedrockPingOptions) &
             if (code !== 0) rej(new Error(`Ping worker exited with an error code: ${code}`));
         });
     });
+
+    data.favicon = data.favicon !== null
+        ? data.favicon instanceof Buffer ? data.favicon : Buffer.from(data.favicon)
+        : null;
+
+    return data;
 }
 
 export async function pingJavaServer(options: JavaPingOptions): Promise<PingData> {
@@ -58,6 +67,8 @@ export async function pingJavaServer(options: JavaPingOptions): Promise<PingData
         onlinePlayers: 0,
         version: null,
         latency: null,
+        motd: null,
+        favicon: null,
         pingedAt: new Date()
     };
 
@@ -70,6 +81,8 @@ export async function pingJavaServer(options: JavaPingOptions): Promise<PingData
     status.maxPlayers = newPingResult.players.max;
     status.onlinePlayers = newPingResult.players.online;
     status.latency = newPingResult.latency;
+    status.motd = (typeof newPingResult.description === 'string' ? newPingResult.description : newPingResult.description.text)?.replace(/§[0-9A-FK-OR]/gi, '') || null;
+    status.favicon = newPingResult.favicon ? parseBase64URL(newPingResult.favicon) : null;
     status.version = newPingResult.version.name;
 
     return status;
@@ -87,6 +100,8 @@ export async function pingBedrockServer(options: BedrockPingOptions): Promise<Pi
         onlinePlayers: 0,
         version: null,
         latency: null,
+        motd: null,
+        favicon: null,
         pingedAt: new Date()
     };
 
@@ -96,6 +111,7 @@ export async function pingBedrockServer(options: BedrockPingOptions): Promise<Pi
     status.maxPlayers = pingData.playersMax;
     status.onlinePlayers = pingData.playersOnline;
     status.latency = null;
+    status.motd = pingData.motd?.replace(/§[0-9A-FK-OR]/gi, '') || null
     status.version = pingData.version;
 
     return status;
