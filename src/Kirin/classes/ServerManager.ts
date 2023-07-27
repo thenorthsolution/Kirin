@@ -1,4 +1,4 @@
-import { Channel, Collection, EmbedBuilder, Guild, Interaction, Message, RepliableInteraction, escapeInlineCode, inlineCode, time } from 'discord.js';
+import { Channel, Collection, EmbedBuilder, Guild, Interaction, Message, RepliableInteraction, time } from 'discord.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import { Server, ServerData, ServerStatus } from './Server.js';
 import { TypedEmitter } from 'tiny-typed-emitter';
@@ -14,6 +14,9 @@ export interface ServerManagerEvents {
     serverUpdate: (oldServer: ServerData, newServer: Server) => any;
     serverStart: (server: Server) => any;
     serverStop: (server: Server) => any;
+    serverRconConnect: (server: Server) => any;
+    serverRconDisconnect: (server: Server) => any;
+    serverRconError: (error: Error, server: Server) => any;
     serverProcessStart: (childProcess: ChildProcess, server: Server) => any;
     serverProcessStop: (childProcess: ChildProcess, server: Server) => any;
     serverProcessError: (error: Error, server: Server) => any;
@@ -46,6 +49,9 @@ export class ServerManager extends TypedEmitter<ServerManagerEvents> {
         this.on('serverUpdate', (oldServerOptions, newServer) => this.kirin.apiClient.socket?.sockets.emit('serverUpdate', oldServerOptions, newServer.toJSON()));
         this.on('serverStart', server => this.kirin.apiClient.socket?.sockets.emit('serverStart', server.toJSON()));
         this.on('serverStop', server => this.kirin.apiClient.socket?.sockets.emit('serverStop', server.toJSON()));
+        this.on('serverRconConnect', server => this.kirin.apiClient.socket?.sockets.emit('serverRconConnect', server.toJSON()));
+        this.on('serverRconDisconnect', server => this.kirin.apiClient.socket?.sockets.emit('serverRconDisconnect', server.toJSON()));
+        this.on('serverRconError', (err, server) => this.kirin.apiClient.socket?.sockets.emit('serverRconError', err.message, server.toJSON()));
         this.on('serverProcessStart', (childProcess, server) => this.kirin.apiClient.socket?.sockets.emit('serverProcessStart', childProcess.pid ?? -1, server.toJSON()));
         this.on('serverProcessStop', (childProcess, server) => this.kirin.apiClient.socket?.sockets.emit('serverProcessStop', childProcess.pid ?? -1, server.toJSON()));
         this.on('serverProcessError', (error, server) => this.kirin.apiClient.socket?.sockets.emit('serverProcessError', error.message, server.toJSON()));

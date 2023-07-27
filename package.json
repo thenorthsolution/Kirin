@@ -17,6 +17,7 @@
     "express": "^4.18.2",
     "fallout-utility": "^2.7.0",
     "minecraft-protocol": "^1.43.2",
+    "minecraft-rcon-client": "^2.1.2",
     "reciple": "^7.9.1",
     "reciple-anticrash": "^1.1.1",
     "reciple-registry-cache": "^1.0.2",

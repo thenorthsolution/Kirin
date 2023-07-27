@@ -9,6 +9,7 @@ import { randomBytes } from 'crypto';
 import { cli } from 'reciple';
 import path from 'path';
 import { readFile, rm, writeFile } from 'fs/promises';
+import { Rcon } from 'minecraft-rcon-client';
 
 export type ServerDataWithIdStatus = ServerData & { id: string; status: ServerStatus; };
 
@@ -29,10 +30,17 @@ export interface ServerData {
         killSignal?: NodeJS.Signals | null;
         killOnBotStop?: boolean | null;
     };
+    rcon?: Rcon['options'];
     messages: Record<'offline' | 'online' | 'starting' | 'unattached', BaseMessageOptions>;
     components: Record<'start' | 'stop', null | APIButtonComponentBase<ButtonStyle.Primary | ButtonStyle.Secondary | ButtonStyle.Success | ButtonStyle.Danger>>;
     permissions?: null | Record<'start' | 'stop', null | PermissionResolvable>;
     ping: Record<'pingInterval' | 'pingTimeout', number>;
+}
+
+export enum RconRequestId {
+    CMD_RESPONSE = 0,
+    CMD_REQUEST = 2,
+    LOGIN = 3
 }
 
 export type ServerStatus = 'Online' | 'Offline' | 'Starting' | 'Unattached';
@@ -47,6 +55,7 @@ export class Server<Ready extends boolean = boolean> {
     private _message?: Message | null = null;
     private _deleted: boolean = false;
     private _pingInterval?: NodeJS.Timer;
+    private _rcon?: Rcon;
     private _pendingStop: boolean = false;
 
     get name() { return this.options.name; }
@@ -62,6 +71,7 @@ export class Server<Ready extends boolean = boolean> {
     get port() { return Number(this.options.ip.split(':')[1] ?? 25565); }
     get file() { return this.options.file; }
     get server() { return this.options.server; }
+    get rcon() { return this.options.rcon; }
     get messages() { return this.replacePlaceholders(this.options.messages); }
 
     get components() {
@@ -129,6 +139,7 @@ export class Server<Ready extends boolean = boolean> {
     get cwd() { return path.isAbsolute(this.server.cwd) ? this.server.cwd : path.join(cli.cwd, this.server.cwd); }
     get cached() { return !!this.manager.cache.get(this.id); }
     get deleted() { return this._deleted; }
+    get rconConnected() { return !!this._rcon?.connected; }
 
     public process?: ChildProcess;
     public lastPing?: PingData;
@@ -136,7 +147,9 @@ export class Server<Ready extends boolean = boolean> {
     constructor(public options: ServerData, kirin: Kirin) {
         this.kirin = kirin;
         this.manager = kirin.servers;
-        this.logger = kirin.logger?.clone({ name: `Kirin/Server:${this.name}` })
+        this.logger = kirin.logger?.clone({ name: `Kirin/Server:${this.name}` });
+
+        this._rcon = options.rcon && new Rcon(options.rcon);
     }
 
     public async start(): Promise<this> {
@@ -317,7 +330,33 @@ export class Server<Ready extends boolean = boolean> {
         this.manager.emit('serverPing', oldPing, newPing, this);
         await this.message?.edit(this.messageContent);
 
+        if (this._rcon) {
+            if (newPing.status !== 'Offline' && !this._rcon.connected) {
+                this._rcon.connect()
+                    .catch((err: Error) => err)
+                    .then(err => {
+                        if (err) {
+                            this.manager.emit('serverRconError', err, this);
+                        } else {
+                            this.manager.emit('serverRconConnect', this);
+                        }
+                    });
+            }
+
+            if (newPing.status === 'Offline' && this._rcon.connected) {
+                this._rcon.disconnect();
+                this.manager.emit('serverRconDisconnect', this);
+            }
+        }
+
         return newPing;
+    }
+
+    public async sendRconData(cmd: string): Promise<string>;
+    public async sendRconData(data: string, requestId?: RconRequestId): Promise<string>;
+    public async sendRconData(cmd: string, requestId?: RconRequestId): Promise<string> {
+        if (!this.rconConnected) throw new Error('Rcon not connected');
+        return !requestId ? this._rcon!.send(cmd) : this._rcon!.sendRaw(cmd, requestId as number);
     }
 
     public async saveJson(file?: string | null): Promise<void> {

@@ -1,6 +1,6 @@
 import { ServerData, ServerDataWithIdStatus } from '../classes/Server.js';
 
-export type APIResponse = APIPingResponse|APIAuthorizeResponse|APIServerResponse|APIServersResponse;
+export type APIResponse = APIPingResponse|APIAuthorizeResponse|APIServerResponse|APIServersResponse|APIServerRconResponse;
 
 export interface APIPingResponse {
     type: 'Ping';
@@ -20,4 +20,9 @@ export interface APIServerResponse<WithIdStatus extends boolean = true> {
 export interface APIServersResponse<WithIdStatus extends boolean = true> {
     type: 'Servers';
     servers: (WithIdStatus extends true ? ServerDataWithIdStatus : ServerData)[];
+}
+
+export interface APIServerRconResponse {
+    type: 'ServerRconResponse';
+    rconResponse: string;
 }

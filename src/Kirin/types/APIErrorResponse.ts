@@ -1,6 +1,6 @@
-import { ServerData, ServerDataWithIdStatus } from '../classes/Server.js';
+import { ServerDataWithIdStatus } from '../classes/Server.js';
 
-export type APIErrorResponse = APIInvalidAuthResponse|APIServerNotFoundResponse|APIServerActionFailedResponse|APIServerStopFailedResponse;
+export type APIErrorResponse = APIInvalidAuthResponse|APIServerNotFoundResponse|APIServerActionFailedResponse|APIServerStopFailedResponse|APIServerSendRconMissingProperty|APIServerSendRconError;
 
 export interface APIInvalidAuthResponse {
     error: 'InvalidAuth';
@@ -19,4 +19,13 @@ export interface APIServerActionFailedResponse {
 export interface APIServerStopFailedResponse {
     error: 'ServerStopFailed';
     server: ServerDataWithIdStatus;
+}
+
+export interface APIServerSendRconMissingProperty {
+    error: 'ServerSendRconMissingProperty';
+    missingProperty: string;
+}
+
+export interface APIServerSendRconError {
+    error: 'ServerSendRconNotConnected'|'ServerSendRconNoResponse';
 }

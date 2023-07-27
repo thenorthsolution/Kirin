@@ -14,4 +14,7 @@ export interface SocketEvents {
     serverProcessStderr: (message: string, server: ServerDataWithIdStatus) => any;
     serverPing: (oldPing: PingData|null, newPing: PingData, server: ServerDataWithIdStatus) => any;
     serverStatusUpdate: (oldStatus: ServerStatus, newStatus: ServerStatus, server: ServerDataWithIdStatus) => any;
+    serverRconConnect: (server: ServerDataWithIdStatus) => any;
+    serverRconDisconnect: (server: ServerDataWithIdStatus) => any;
+    serverRconError: (error: string, server: ServerDataWithIdStatus) => any;
 }
