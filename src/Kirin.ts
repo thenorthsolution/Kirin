@@ -67,6 +67,10 @@ export class Kirin implements RecipleModuleScript {
     }
 
     public async onUnload(unloadData: RecipleModuleScriptUnloadData): Promise<void> {
+        for (const [id, server] of this.servers.cache) {
+            await server.message?.edit({ components: [] }).catch(() => null);
+        }
+
         this.servers.unmountClientListeners();
     }
 }
