@@ -1,7 +1,7 @@
 import { Channel, Collection, EmbedBuilder, Guild, Interaction, Message, RepliableInteraction, time } from 'discord.js';
 import { existsSync, lstatSync, mkdirSync, readdirSync } from 'fs';
 import { Server, ServerData, ServerStatus } from './Server.js';
-import { TypedEmitter } from 'tiny-typed-emitter';
+import { TypedEmitter } from 'fallout-utility';
 import { ChildProcess } from 'child_process';
 import { PingData } from '../utils/ping.js';
 import { Logger } from 'fallout-utility';
@@ -9,21 +9,21 @@ import { Kirin } from '../../Kirin.js';
 import path from 'path';
 
 export interface ServerManagerEvents {
-    serverCreate: (server: Server) => any;
-    serverDelete: (server: Server) => any;
-    serverUpdate: (oldServer: ServerData, newServer: Server) => any;
-    serverStart: (server: Server) => any;
-    serverStop: (server: Server) => any;
-    serverRconConnect: (server: Server) => any;
-    serverRconDisconnect: (server: Server) => any;
-    serverRconError: (error: Error, server: Server) => any;
-    serverProcessStart: (childProcess: ChildProcess, server: Server) => any;
-    serverProcessStop: (childProcess: ChildProcess, server: Server) => any;
-    serverProcessError: (error: Error, server: Server) => any;
-    serverProcessStdout: (message: string, server: Server) => any;
-    serverProcessStderr: (message: string, server: Server) => any;
-    serverPing: (oldPing: PingData|undefined, newPing: PingData, server: Server) => any;
-    serverStatusUpdate: (oldStatus: ServerStatus, newStatus: ServerStatus, server: Server) => any;
+    serverCreate: [server: Server];
+    serverDelete: [server: Server];
+    serverUpdate: [oldServer: ServerData, newServer: Server];
+    serverStart: [server: Server];
+    serverStop: [server: Server];
+    serverRconConnect: [server: Server];
+    serverRconDisconnect: [server: Server];
+    serverRconError: [error: Error, server: Server];
+    serverProcessStart: [childProcess: ChildProcess, server: Server];
+    serverProcessStop: [childProcess: ChildProcess, server: Server];
+    serverProcessError: [error: Error, server: Server];
+    serverProcessStdout: [message: string, server: Server];
+    serverProcessStderr: [message: string, server: Server];
+    serverPing: [oldPing: PingData|undefined, newPing: PingData, server: Server];
+    serverStatusUpdate: [oldStatus: ServerStatus, newStatus: ServerStatus, server: Server];
 }
 
 export class ServerManager extends TypedEmitter<ServerManagerEvents> {
