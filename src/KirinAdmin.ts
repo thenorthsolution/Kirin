@@ -1,4 +1,4 @@
-import { APIModalInteractionResponseCallbackData, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Message, TextInputBuilder, TextInputStyle, codeBlock } from 'discord.js';
+import { APIModalInteractionResponseCallbackData, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Message, TextInputBuilder, TextInputStyle, codeBlock, escapeCodeBlock } from 'discord.js';
 import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModuleScript, SlashCommandBuilder, cli } from 'reciple';
 import { recursiveObjectReplaceValues } from 'fallout-utility';
 import { Server, ServerData } from './Kirin/classes/Server.js';
@@ -8,6 +8,7 @@ import kirin, { Kirin } from './Kirin.js';
 import { randomBytes } from 'crypto';
 import path from 'path';
 import { mkdir, rm, writeFile } from 'fs/promises';
+import { parseRconColors } from './Kirin/utils/parseRconColors.js';
 
 export class KirinAdmin implements RecipleModuleScript {
     readonly versions: string = '^7';
@@ -39,9 +40,18 @@ export class KirinAdmin implements RecipleModuleScript {
                         .setName('delete')
                         .setDescription('Delete a kirin server')
                     )
+                    .addSubcommand(send => serverOption(send)
+                        .setName('send')
+                        .setDescription('Send a command to a server with rcon connection')
+                        .addStringOption(cmd => cmd
+                            .setName('cmd')
+                            .setDescription('The command you wanna send')
+                            .setRequired(true)
+                        )
+                    )
                 )
                 .setExecute(async ({ interaction }) => {
-                    const action = interaction.options.getSubcommand() as 'create'|'delete';
+                    const action = interaction.options.getSubcommand() as 'create'|'delete'|'send';
                     const serverId = interaction.options.getString('server') || '';
                     const server = serverId ? this.kirin.servers.cache.get(serverId) : null;
 
@@ -67,6 +77,22 @@ export class KirinAdmin implements RecipleModuleScript {
                             await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverDeleted));
 
                             break;
+                        case 'send':
+                            await interaction.deferReply({ ephemeral: true });
+
+                            if (!server) {
+                                await interaction.editReply(recursiveObjectReplaceValues(this.kirin.config.messages.serverNotFound, '{server_id}', serverId));
+                                return;
+                            }
+
+                            if (!server.rconConnected) {
+                                await interaction.editReply(server.replacePlaceholders(this.kirin.config.messages.serverRconNotConnected));
+                                return;
+                            }
+
+                            const response = await server.sendRconData(interaction.options.getString('cmd', true));
+
+                            await interaction.editReply(codeBlock('ansi', parseRconColors(escapeCodeBlock(response.trim() || 'Command sent to server'))));
                     }
                 })
                 .setHalt(commandHalt)

@@ -32,7 +32,8 @@ export const messages = {
     serverIsOffline: `Server is offline`,
     serverDeleted: `Server has been deleted`,
     serverIsOnline: `Stop the server to continue`,
-    serverIsUnattached: `Server process is currently not accessible by the bot`
+    serverIsUnattached: `Server process is currently not accessible by the bot`,
+    serverRconNotConnected: `Rcon is not connected in this server`
 };
 
 export const defaultConfig: Config = {

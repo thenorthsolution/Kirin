@@ -10,6 +10,7 @@
     "dev": "nodemon --ext ts,mts,cts,json,yml,yaml --exec \"npm run build && reciple\" --signal SIGHUP"
   },
   "dependencies": {
+    "@catplusplus/rcon": "^1.0.0",
     "bedrock-protocol": "^3.30.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
