@@ -36,7 +36,7 @@ export async function pingServer(options: (JavaPingOptions|BedrockPingOptions) &
     }
 
     const data: PingData = await new Promise((res, rej) => {
-        const worker = new Worker(path.join(__dirname, './ping.worker.js'), {
+        const worker = new Worker(path.join(__dirname, './workers/ping.js'), {
             workerData: options
         });
 

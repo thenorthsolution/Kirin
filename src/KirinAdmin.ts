@@ -150,7 +150,7 @@ export class KirinAdmin implements RecipleModuleScript {
             name,
             protocol,
             description: description || undefined,
-            ip,
+            ip: !isNaN(Number(ip)) ? `127.0.0.1:${ip}` : ip,
             server: {
                 command: 'java',
                 cwd: modalInteraction.fields.getTextInputValue('cwd'),

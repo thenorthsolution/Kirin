@@ -1,5 +1,5 @@
 import { parentPort, workerData } from 'worker_threads';
-import { BedrockPingOptions, JavaPingOptions, PingData, pingBedrockServer, pingJavaServer } from './ping.js';
+import { BedrockPingOptions, JavaPingOptions, PingData, pingBedrockServer, pingJavaServer } from '../ping.js';
 
 if (!parentPort) process.exit(1);
 
