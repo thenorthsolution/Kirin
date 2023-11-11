@@ -52,7 +52,7 @@ export class Server<Ready extends boolean = boolean> {
     private _channel?: Exclude<GuildTextBasedChannel, StageChannel> | null = null;
     private _message?: Message | null = null;
     private _deleted: boolean = false;
-    private _pingInterval?: NodeJS.Timer;
+    private _pingInterval?: NodeJS.Timeout;
     private _rcon?: RconClient;
     private _pendingStop: boolean = false;
 
