@@ -1,7 +1,7 @@
 import { SlashCommandSubcommandBuilder } from 'discord.js';
-import { SlashCommandOptionsOnlyBuilder } from 'reciple';
+import { SlashCommandBuilder } from 'reciple';
 
-export function serverOption<T extends SlashCommandOptionsOnlyBuilder|SlashCommandSubcommandBuilder>(builder: T, autocomplete?: boolean): T {
+export function serverOption<T extends SlashCommandBuilder|SlashCommandSubcommandBuilder>(builder: T, autocomplete?: boolean): T {
     return builder
         .addStringOption(server => server
             .setName('server')

@@ -1,4 +1,4 @@
-import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModuleScriptUnloadData, RecipleModuleScript, SlashCommandBuilder, cli } from 'reciple';
+import { AnyCommandResolvable, RecipleClient, RecipleModuleData, RecipleModuleLoadData, RecipleModuleStartData, SlashCommandBuilder, cli } from 'reciple';
 import { Logger, recursiveObjectReplaceValues } from 'fallout-utility';
 import { ServerManager } from './Kirin/classes/ServerManager.js';
 import { serverOption } from './Kirin/utils/commandOption.js';
@@ -7,8 +7,8 @@ import { commandHalt } from './Kirin/utils/commandHalt.js';
 import { APIClient } from './Kirin/classes/APIClient.js';
 import path from 'path';
 
-export class Kirin implements RecipleModuleScript {
-    readonly versions: string = '^7';
+export class Kirin implements RecipleModuleData {
+    readonly versions: string = '^8';
     readonly config: Config = getConfig();
 
     public logger?: Logger;
@@ -17,7 +17,7 @@ export class Kirin implements RecipleModuleScript {
     public servers!: ServerManager;
     public serversDir: string = path.join(cli.cwd, this.config.serversFolders);
 
-    readonly commands: (AnyCommandBuilder|AnyCommandData)[] = !this.config.command.enabled
+    readonly commands: AnyCommandResolvable[] = !this.config.command.enabled
         ? []
         : [
             new SlashCommandBuilder()
@@ -47,7 +47,7 @@ export class Kirin implements RecipleModuleScript {
                 .setHalt(commandHalt)
         ];
 
-    public async onStart(client: RecipleClient<false>): Promise<boolean> {
+    public async onStart({ client }: RecipleModuleStartData): Promise<boolean> {
         this.logger = client.logger?.clone({ name: 'Kirin' });
         this.client = client;
         this.apiClient = new APIClient(this);
@@ -57,7 +57,7 @@ export class Kirin implements RecipleModuleScript {
         return true;
     }
 
-    public async onLoad(client: RecipleClient<true>): Promise<void> {
+    public async onLoad({ client }: RecipleModuleLoadData): Promise<void> {
         if (this.config.api.enabled) {
             await this.apiClient.start();
             this.logger?.log(`Kirin is now active! http://127.0.0.1:${this.config.api.port}`);
@@ -66,7 +66,7 @@ export class Kirin implements RecipleModuleScript {
         await this.servers.loadServersFromDir(this.serversDir)
     }
 
-    public async onUnload(unloadData: RecipleModuleScriptUnloadData): Promise<void> {
+    public async onUnload(): Promise<void> {
         for (const [id, server] of this.servers.cache) {
             if (server.message?.components.length) await server.message?.edit({ components: [] }).catch(() => null);
         }

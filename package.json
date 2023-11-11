@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@catplusplus/rcon": "^1.0.0",
+    "@reciple/core": "^8.1.7",
+    "@reciple/utils": "^8.0.4",
     "bedrock-protocol": "^3.32.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
@@ -18,9 +20,9 @@
     "express": "^4.18.2",
     "fallout-utility": "^2.8.0",
     "minecraft-protocol": "^1.44.0",
-    "reciple": "^7.9.1",
-    "reciple-anticrash": "^1.1.1",
-    "reciple-registry-cache": "^1.0.2",
+    "reciple": "^8.1.9",
+    "reciple-anticrash": "^2.0.0",
+    "reciple-registry-cache": "^2.0.0",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {

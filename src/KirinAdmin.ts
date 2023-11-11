@@ -1,5 +1,5 @@
 import { APIModalInteractionResponseCallbackData, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Message, TextInputBuilder, TextInputStyle, codeBlock, escapeCodeBlock } from 'discord.js';
-import { AnyCommandBuilder, AnyCommandData, RecipleClient, RecipleModuleScript, SlashCommandBuilder, cli } from 'reciple';
+import { AnyCommandResolvable, RecipleClient, RecipleModuleData, RecipleModuleStartData, SlashCommandBuilder, cli } from 'reciple';
 import { recursiveObjectReplaceValues } from 'fallout-utility';
 import { Server, ServerData } from './Kirin/classes/Server.js';
 import { serverOption } from './Kirin/utils/commandOption.js';
@@ -10,14 +10,14 @@ import path from 'path';
 import { mkdir, rm, writeFile } from 'fs/promises';
 import { parseRconColors } from './Kirin/utils/parseRconColors.js';
 
-export class KirinAdmin implements RecipleModuleScript {
-    readonly versions: string = '^7';
-    readonly commands: (AnyCommandBuilder | AnyCommandData)[] = [];
+export class KirinAdmin implements RecipleModuleData {
+    readonly versions: string = '^8';
+    readonly commands: AnyCommandResolvable[] = [];
 
     public client!: RecipleClient;
     public kirin: Kirin = kirin;
 
-    public async onStart(client: RecipleClient<false>): Promise<boolean> {
+    public async onStart({ client }: RecipleModuleStartData): Promise<boolean> {
         this.client = client;
         this.commands.push(
             new SlashCommandBuilder()
