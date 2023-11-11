@@ -1,3 +1,3 @@
-import { RecipleCrashHandler } from 'reciple-anticrash';
+import { RecipleAnticrash } from 'reciple-anticrash';
 
-export default new RecipleCrashHandler();
+export default new RecipleAnticrash();
