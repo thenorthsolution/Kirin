@@ -7,7 +7,7 @@
     "build": "rimraf ./modules && tsc",
     "start": "reciple",
     "build:start": "npm run build && reciple --debugmode",
-    "dev": "nodemon --ext ts,mts,cts,json,yml,yaml --exec \"npm run build && reciple\" --signal SIGHUP"
+    "dev": "nodemon --ext ts,mts,cts --exec \"npm run build && reciple\" --signal SIGHUP"
   },
   "dependencies": {
     "@catplusplus/rcon": "^1.0.0",
