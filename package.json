@@ -1,34 +1,38 @@
 {
-  "name": "reciple-app",
+  "name": "kirin",
   "private": true,
   "type": "module",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "scripts": {
     "build": "rimraf ./modules && tsc",
     "start": "reciple",
     "build:start": "npm run build && reciple --debugmode",
-    "dev": "nodemon --ext ts,mts,cts,json,yml,yaml --exec \"npm run build && reciple\" --signal SIGHUP"
+    "dev": "nodemon --ext ts,mts,cts --exec \"npm run build && reciple\" --signal SIGHUP"
   },
   "dependencies": {
     "@catplusplus/rcon": "^1.0.0",
-    "bedrock-protocol": "^3.30.0",
+    "@reciple/core": "^8.3.1",
+    "@reciple/utils": "^8.2.0",
+    "bedrock-protocol": "^3.33.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "discord.js": "^14.11.0",
+    "discord.js": "^14.14.1",
     "express": "^4.18.2",
-    "fallout-utility": "^2.7.0",
-    "minecraft-protocol": "^1.43.2",
-    "reciple": "^7.9.1",
-    "reciple-anticrash": "^1.1.1",
-    "reciple-registry-cache": "^1.0.2",
-    "socket.io": "^4.7.1"
+    "fallout-utility": "^2.8.0",
+    "lodash": "^4.17.21",
+    "minecraft-protocol": "^1.44.0",
+    "reciple": "^8.3.1",
+    "reciple-anticrash": "^2.1.1",
+    "reciple-registry-cache": "^2.1.1",
+    "socket.io": "^4.7.2"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.13",
-    "@types/express": "^4.17.17",
-    "@types/node": "^20.4.5",
-    "nodemon": "^3.0.1",
-    "rimraf": "^5.0.1",
-    "typescript": "^5.1.6"
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^20.10.5",
+    "nodemon": "^3.0.2",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
   }
 }

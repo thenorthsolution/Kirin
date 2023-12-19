@@ -1,6 +1,7 @@
-import { PermissionResolvable, inlineCode, mergeDefault } from 'discord.js';
+import { PermissionResolvable, inlineCode } from 'discord.js';
 import { CorsOptions, CorsOptionsDelegate } from 'cors';
 import { createReadFile } from 'fallout-utility';
+import { defaultsDeep } from 'lodash';
 import { writeFileSync } from 'fs';
 import { cli } from 'reciple';
 import path from 'path';
@@ -56,7 +57,7 @@ export function getConfig(): Config {
     return createReadFile(path.join(cli.cwd, 'config/config.json'), defaultConfig, {
         encodeFileData: data => JSON.stringify(data, null, 2),
         formatReadData: data => {
-            const config = mergeDefault(JSON.parse(data.toString('utf-8')), defaultConfig) as Config;
+            const config = defaultsDeep(defaultConfig, JSON.parse(data.toString('utf-8'))) as Config;
 
             writeFileSync(path.join(cli.cwd, 'config/config.json'), JSON.stringify(config, null, 2));
 
