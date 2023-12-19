@@ -1,4 +1,4 @@
-import { APIButtonComponentBase, BaseMessageOptions, ButtonBuilder, ButtonStyle, ChannelType, ComponentType, Guild, GuildTextBasedChannel, If, Message, PermissionResolvable, PermissionsBitField, StageChannel, inlineCode, mergeDefault } from 'discord.js';
+import { APIButtonComponentBase, BaseMessageOptions, ButtonBuilder, ButtonStyle, ChannelType, ComponentType, Guild, GuildTextBasedChannel, If, Message, PermissionResolvable, PermissionsBitField, StageChannel, inlineCode } from 'discord.js';
 import { Logger, recursiveObjectReplaceValues, PartialDeep } from 'fallout-utility';
 import { RconClient, RconPacketResolvable } from '@catplusplus/rcon';
 import { resolveFromCachedManager } from '../utils/managers.js';
@@ -8,6 +8,7 @@ import { ChildProcess, spawn } from 'child_process';
 import { ServerManager } from './ServerManager.js';
 import { RecipleError, cli } from 'reciple';
 import { Kirin } from '../../Kirin.js';
+import { defaultsDeep } from 'lodash';
 import { randomBytes } from 'crypto';
 import path from 'path';
 
@@ -274,7 +275,7 @@ export class Server<Ready extends boolean = boolean> {
 
     public async update(options: PartialDeep<ServerData>): Promise<this> {
         const oldOptions = this.options;
-        const newOptions = mergeDefault(options, this.options) as ServerData;
+        const newOptions = defaultsDeep(this.options, options) as ServerData;
         const isFetch = newOptions.channelId !== this.options.channelId
             || newOptions.messageId !== this.options.messageId
             || newOptions.ip !== this.options.ip
